@@ -84,6 +84,29 @@
     input[type=password] { flex:1; min-width:0; font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
     .hint { font-size:.84rem; color:var(--muted); margin:10px 0 0; }
 
+    /* 게시판 */
+    .post-list { list-style:none; margin:0; padding:0; background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; }
+    .post-list li { border-top:1px solid var(--line); }
+    .post-list li:first-child { border-top:0; }
+    .post-item { display:flex; justify-content:space-between; align-items:center; gap:14px; width:100%; text-align:left; background:none; border:0; color:inherit; font:inherit; padding:14px 16px; cursor:pointer; }
+    .post-item:hover { background:color-mix(in srgb, var(--accent) 6%, transparent); }
+    .post-title { font-weight:600; overflow-wrap:anywhere; }
+    .post-meta { color:var(--muted); font-size:.82rem; white-space:nowrap; text-align:right; }
+    .post-list .empty-row { text-align:center; color:var(--muted); padding:32px 16px; }
+    .compose { margin-bottom:14px; }
+    .compose[hidden] { display:none; }
+    .compose label { display:block; font-size:.88rem; font-weight:600; margin:12px 0 6px; }
+    .compose label:first-of-type { margin-top:0; }
+    input[type=text], textarea { width:100%; font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+    textarea { min-height:140px; resize:vertical; }
+    .compose .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+    dialog { border:1px solid var(--line); border-radius:16px; background:var(--surface); color:var(--fg); width:calc(100% - 32px); max-width:640px; padding:22px; box-shadow:var(--shadow); }
+    dialog::backdrop { background:rgba(0,0,0,.45); }
+    dialog h3 { margin:0 0 4px; font-size:1.25rem; letter-spacing:-.02em; overflow-wrap:anywhere; }
+    .post-body { white-space:pre-wrap; overflow-wrap:anywhere; margin:16px 0; padding-top:14px; border-top:1px solid var(--line); }
+    dialog .actions { display:flex; gap:8px; justify-content:flex-end; }
+    .btn.danger { background:var(--err); color:#fff; }
+
     footer { border-top:1px solid var(--line); margin-top:32px; padding:28px 0 40px; color:var(--muted); font-size:.88rem; text-align:center; }
     footer a { color:var(--accent); }
 
@@ -100,6 +123,7 @@
     <a class="brand" href="#top"><span>Jeong's</span> 자료실</a>
     <ul>
       <li><a href="#files">자료</a></li>
+      <li><a href="#board">게시판</a></li>
       <li><a href="#upload">올리기</a></li>
     </ul>
   </div>
@@ -128,6 +152,46 @@
     </div>
     <div class="grid" id="grid"><div class="loading">불러오는 중…</div></div>
   </section>
+
+  <section class="block" id="board">
+    <div class="head">
+      <div>
+        <h2>게시판</h2>
+        <p id="boardCount">글을 불러오는 중…</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost sm" id="boardRefresh" type="button">새로고침</button>
+        <button class="btn sm" id="newPost" type="button">✏️ 글쓰기</button>
+      </div>
+    </div>
+
+    <form class="panel compose" id="compose" hidden>
+      <label for="pAuthor">작성자</label>
+      <input type="text" id="pAuthor" maxlength="30" placeholder="이름" autocomplete="off">
+      <label for="pTitle">제목</label>
+      <input type="text" id="pTitle" maxlength="100" placeholder="제목을 입력하세요" autocomplete="off">
+      <label for="pBody">내용</label>
+      <textarea id="pBody" maxlength="5000" placeholder="내용을 입력하세요"></textarea>
+      <div class="actions">
+        <button class="btn ghost sm" id="cancelPost" type="button">취소</button>
+        <button class="btn sm" id="submitPost" type="submit">등록</button>
+      </div>
+      <p class="hint">글쓰기는 업로드 설정에 GitHub 토큰을 저장한 기기에서만 가능합니다. 누구나 읽을 수 있습니다.</p>
+    </form>
+    <div class="status" id="boardStatus" aria-live="polite" style="margin:0 0 10px"></div>
+
+    <ul class="post-list" id="postList"><li class="empty-row">불러오는 중…</li></ul>
+  </section>
+
+  <dialog id="postDialog">
+    <h3 id="dTitle"></h3>
+    <div class="post-meta" id="dMeta" style="text-align:left;white-space:normal"></div>
+    <div class="post-body" id="dBody"></div>
+    <div class="actions">
+      <button class="btn danger sm" id="dDelete" type="button" hidden>삭제</button>
+      <button class="btn ghost sm" id="dClose" type="button">닫기</button>
+    </div>
+  </dialog>
 
   <section class="block" id="upload">
     <div class="head">
@@ -326,8 +390,131 @@
   $('clearToken').addEventListener('click', () => { store.del(); tokenEl.value = ''; say('토큰을 삭제했습니다.'); });
   $('refresh').addEventListener('click', loadList);
 
+  /* ===== 게시판 ===== */
+  const POSTS = 'posts';
+  const postList = $('postList'), compose = $('compose'), dlg = $('postDialog'), boardStatus = $('boardStatus');
+  let posts = [], current = null;
+
+  const sayBoard = (msg, cls) => { boardStatus.innerHTML = cls ? `<span class="${cls}">${esc(msg)}</span>` : esc(msg); };
+  const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('ko-KR', { year:'numeric', month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }); };
+  const b64 = s => { let bin = ''; new TextEncoder().encode(s).forEach(b => bin += String.fromCharCode(b)); return btoa(bin); };
+  const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
+  async function loadBoard() {
+    postList.innerHTML = '<li class="empty-row">불러오는 중…</li>';
+    try {
+      const res = await fetch(`${API}/${POSTS}?ref=${BRANCH}&t=${Date.now()}`, { headers: headers() });
+      if (res.status === 404) { posts = []; return renderBoard(); }
+      if (!res.ok) throw new Error('글을 불러오지 못했습니다 (' + res.status + ')');
+      const items = (await res.json())
+        .filter(i => i.type === 'file' && i.name.endsWith('.json'))
+        .sort((a, b) => b.name.localeCompare(a.name))
+        .slice(0, 30);
+      const loaded = await Promise.all(items.map(async it => {
+        try {
+          const r = await fetch(it.download_url, { cache: 'no-store' });
+          if (!r.ok) return null;
+          const d = await r.json();
+          return { title: String(d.title || ''), author: String(d.author || ''), content: String(d.content || ''), createdAt: d.createdAt || '', path: it.path, sha: it.sha };
+        } catch { return null; }
+      }));
+      posts = loaded.filter(Boolean);
+      renderBoard();
+    } catch (e) {
+      $('boardCount').textContent = '';
+      postList.innerHTML = `<li class="empty-row">${esc(e.message)}</li>`;
+    }
+  }
+
+  function renderBoard() {
+    $('boardCount').textContent = posts.length ? `최근 글 ${posts.length}개` : '';
+    if (!posts.length) { postList.innerHTML = '<li class="empty-row">아직 글이 없습니다.</li>'; return; }
+    postList.innerHTML = '';
+    posts.forEach((p, i) => {
+      const li = document.createElement('li');
+      li.innerHTML =
+        `<button type="button" class="post-item"><span class="post-title">${esc(p.title)}</span>` +
+        `<span class="post-meta">${esc(p.author || '익명')}<br>${esc(fmtDate(p.createdAt))}</span></button>`;
+      li.firstChild.addEventListener('click', () => openPost(i));
+      postList.appendChild(li);
+    });
+  }
+
+  function openPost(i) {
+    current = posts[i];
+    $('dTitle').textContent = current.title;
+    $('dMeta').textContent = `${current.author || '익명'} · ${fmtDate(current.createdAt)}`;
+    $('dBody').textContent = current.content;
+    $('dDelete').hidden = !store.get();
+    dlg.showModal();
+  }
+
+  $('dClose').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
+
+  $('dDelete').addEventListener('click', async () => {
+    if (!current || !confirm('이 글을 삭제할까요?')) return;
+    const btn = $('dDelete'); btn.disabled = true;
+    try {
+      const res = await fetch(`${API}/${encPath(current.path)}`, {
+        method: 'DELETE',
+        headers: { ...headers(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Delete post', sha: current.sha, branch: BRANCH })
+      });
+      if (!res.ok) { let m = String(res.status); try { m = (await res.json()).message || m; } catch {} throw new Error(m); }
+      dlg.close();
+      sayBoard('글을 삭제했습니다.', 'ok');
+      await loadBoard();
+    } catch (e) {
+      sayBoard('삭제 실패: ' + e.message, 'err');
+      dlg.close();
+    }
+    btn.disabled = false;
+  });
+
+  $('newPost').addEventListener('click', () => {
+    if (!store.get()) {
+      sayBoard('글쓰기는 먼저 아래 업로드 설정에서 GitHub 토큰을 저장해야 합니다.', 'err');
+      $('settings').open = true;
+      return;
+    }
+    $('pAuthor').value = $('pAuthor').value || lsGet('board_author');
+    compose.hidden = false;
+    $('pTitle').focus();
+  });
+  $('cancelPost').addEventListener('click', () => { compose.hidden = true; });
+  $('boardRefresh').addEventListener('click', loadBoard);
+
+  compose.addEventListener('submit', async e => {
+    e.preventDefault();
+    const title = $('pTitle').value.trim(), content = $('pBody').value.trim(), author = $('pAuthor').value.trim();
+    if (!title || !content) { sayBoard('제목과 내용을 입력해 주세요.', 'err'); return; }
+    const btn = $('submitPost'); btn.disabled = true; sayBoard('등록 중…');
+    const now = new Date();
+    const name = `${String(now.getTime()).padStart(13, '0')}-${Math.random().toString(36).slice(2, 6)}.json`;
+    const data = { title, author, content, createdAt: now.toISOString() };
+    try {
+      const res = await fetch(`${API}/${POSTS}/${name}`, {
+        method: 'PUT',
+        headers: { ...headers(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Post: ${title.slice(0, 40)}`, content: b64(JSON.stringify(data)), branch: BRANCH })
+      });
+      if (!res.ok) { let m = String(res.status); try { m = (await res.json()).message || m; } catch {} throw new Error(m); }
+      lsSet('board_author', author);
+      $('pTitle').value = ''; $('pBody').value = '';
+      compose.hidden = true;
+      sayBoard('글을 등록했습니다.', 'ok');
+      await loadBoard();
+    } catch (err) {
+      sayBoard('등록 실패: ' + err.message, 'err');
+    }
+    btn.disabled = false;
+  });
+
   if (!store.get()) $('settings').open = true;
   loadList();
+  loadBoard();
 })();
 </script>
 </body>
