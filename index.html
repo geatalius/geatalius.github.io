@@ -101,7 +101,10 @@
     textarea { min-height:140px; resize:vertical; }
     .compose .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
     dialog { border:1px solid var(--line); border-radius:16px; background:var(--surface); color:var(--fg); width:calc(100% - 32px); max-width:640px; padding:22px; box-shadow:var(--shadow); }
+    dialog { max-height:90vh; overflow-y:auto; }
     dialog::backdrop { background:rgba(0,0,0,.45); }
+    .comments { border-top:1px solid var(--line); padding-top:16px; min-height:80px; }
+    .comments h4 { margin:0 0 10px; font-size:1rem; }
     dialog h3 { margin:0 0 4px; font-size:1.25rem; letter-spacing:-.02em; overflow-wrap:anywhere; }
     .post-body { white-space:pre-wrap; overflow-wrap:anywhere; margin:16px 0; padding-top:14px; border-top:1px solid var(--line); }
     dialog .actions { display:flex; gap:8px; justify-content:flex-end; }
@@ -187,10 +190,11 @@
     <h3 id="dTitle"></h3>
     <div class="post-meta" id="dMeta" style="text-align:left;white-space:normal"></div>
     <div class="post-body" id="dBody"></div>
-    <div class="actions">
+    <div class="actions" style="margin-bottom:18px">
       <button class="btn danger sm" id="dDelete" type="button" hidden>삭제</button>
       <button class="btn ghost sm" id="dClose" type="button">닫기</button>
     </div>
+    <div class="comments" id="comments"></div>
   </dialog>
 
   <section class="block" id="upload">
@@ -447,8 +451,37 @@
     $('dMeta').textContent = `${current.author || '익명'} · ${fmtDate(current.createdAt)}`;
     $('dBody').textContent = current.content;
     $('dDelete').hidden = !store.get();
+    loadComments(current.path);
     dlg.showModal();
   }
+
+  // giscus 댓글: 글마다 별도의 Discussion 스레드(제목 = 글 파일 경로)
+  function loadComments(term) {
+    const box = $('comments');
+    box.innerHTML = '<h4>💬 댓글</h4>';
+    const s = document.createElement('script');
+    s.src = 'https://giscus.app/client.js';
+    const attrs = {
+      'data-repo': 'geatalius/geatalius.github.io',
+      'data-repo-id': 'R_kgDOVLjzAA',
+      'data-category': 'Announcements',
+      'data-category-id': 'DIC_kwDOVLjzAM4DIkAY',
+      'data-mapping': 'specific',
+      'data-term': term,
+      'data-strict': '0',
+      'data-reactions-enabled': '1',
+      'data-emit-metadata': '0',
+      'data-input-position': 'bottom',
+      'data-theme': 'preferred_color_scheme',
+      'data-lang': 'ko',
+      'crossorigin': 'anonymous'
+    };
+    Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
+    s.async = true;
+    box.appendChild(s);
+  }
+
+  dlg.addEventListener('close', () => { $('comments').innerHTML = ''; });
 
   $('dClose').addEventListener('click', () => dlg.close());
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
