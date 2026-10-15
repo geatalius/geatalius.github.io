@@ -3,29 +3,195 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jeong's Web</title>
+  <title>자료실</title>
   <style>
-    :root { --bg:#f7f8fa; --fg:#1f2430; --accent:#2563eb; --card:#ffffff; }
+    :root { --bg:#f5f6f8; --fg:#1f2430; --muted:#6b7280; --accent:#2563eb; --card:#ffffff; --line:#e3e6ec; --ok:#16a34a; --err:#dc2626; }
     @media (prefers-color-scheme: dark) {
-      :root { --bg:#14171f; --fg:#e8eaf0; --accent:#6ea0ff; --card:#1d2230; }
+      :root { --bg:#14171f; --fg:#e8eaf0; --muted:#9aa3b2; --accent:#6ea0ff; --card:#1d2230; --line:#2b3245; --ok:#4ade80; --err:#f87171; }
     }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family:-apple-system,"Noto Sans KR",sans-serif; background:var(--bg); color:var(--fg); line-height:1.6; }
-    main { max-width:680px; margin:0 auto; padding:48px 16px; }
-    h1 { margin:0 0 8px; font-size:1.8rem; }
-    p.sub { margin:0 0 32px; opacity:.7; }
-    .card { background:var(--card); border-radius:12px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
-    a { color:var(--accent); }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:-apple-system,"Noto Sans KR",sans-serif; background:var(--bg); color:var(--fg); line-height:1.5; }
+    main { max-width:720px; margin:0 auto; padding:24px 16px 64px; }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+    h1 { margin:0; font-size:1.5rem; }
+    h2 { margin:0 0 12px; font-size:1.05rem; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
+    .drop { border:2px dashed var(--line); border-radius:12px; padding:28px 12px; text-align:center; cursor:pointer; color:var(--muted); transition:.15s; }
+    .drop.over { border-color:var(--accent); color:var(--accent); background:rgba(37,99,235,.06); }
+    .drop strong { display:block; color:var(--fg); font-size:1rem; margin-bottom:4px; }
+    button, .btn { font:inherit; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; text-decoration:none; display:inline-block; }
+    button.ghost { background:transparent; color:var(--accent); border:1px solid var(--line); }
+    button:disabled { opacity:.5; cursor:default; }
+    input[type=password], input[type=text] { width:100%; font:inherit; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); }
+    .row { display:flex; gap:8px; }
+    .hint { font-size:.85rem; color:var(--muted); margin:8px 0 0; }
+    ul { list-style:none; margin:0; padding:0; }
+    li { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line); }
+    li:first-child { border-top:0; }
+    li a { color:var(--accent); word-break:break-all; text-decoration:none; }
+    li .size { color:var(--muted); font-size:.85rem; white-space:nowrap; }
+    .status { font-size:.9rem; margin-top:10px; min-height:1.2em; }
+    .status .ok { color:var(--ok); } .status .err { color:var(--err); }
+    .empty { color:var(--muted); text-align:center; padding:12px 0; }
+    details summary { cursor:pointer; font-weight:600; }
+    details[open] summary { margin-bottom:12px; }
   </style>
 </head>
 <body>
-  <main>
-    <h1>안녕하세요 👋</h1>
-    <p class="sub">GitHub Pages로 운영되는 웹페이지입니다.</p>
-    <div class="card">
-      <p>이 페이지는 <code>index.html</code> 파일입니다. 내용을 수정해서 저장소에 올리면 바로 반영됩니다.</p>
-      <p><a href="https://github.com/geatalius" target="_blank" rel="noopener">GitHub 프로필</a></p>
+<main>
+  <header>
+    <h1>📁 자료실</h1>
+    <a href="https://github.com/geatalius/geatalius.github.io/tree/main/files" target="_blank" rel="noopener" style="color:var(--accent);font-size:.9rem">GitHub에서 보기</a>
+  </header>
+
+  <section class="card">
+    <h2>자료 올리기</h2>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="파일 선택">
+      <strong>파일을 끌어다 놓거나 눌러서 선택</strong>
+      여러 개를 한 번에 올릴 수 있습니다 (파일당 약 25MB 이하)
     </div>
-  </main>
+    <input type="file" id="picker" multiple hidden>
+    <div class="status" id="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <details id="settings">
+      <summary>⚙️ 업로드 설정 (처음 한 번)</summary>
+      <label for="token" style="font-size:.9rem">GitHub 토큰</label>
+      <div class="row" style="margin-top:6px">
+        <input type="password" id="token" placeholder="github_pat_..." autocomplete="off">
+        <button id="saveToken">저장</button>
+      </div>
+      <p class="hint">GitHub → Settings → Developer settings → Fine-grained tokens에서 이 레파짓(geatalius.github.io)만 선택하고 Contents 권한을 Read and write로 만든 토큰입니다. 이 브라우저에만 저장되고 다른 곳으로 전송되지 않습니다. 공용 기기에서는 사용 후 삭제하세요.</p>
+      <button class="ghost" id="clearToken" style="margin-top:8px">토큰 삭제</button>
+    </details>
+  </section>
+
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h2 style="margin:0">올린 자료</h2>
+      <button class="ghost" id="refresh">새로고침</button>
+    </div>
+    <ul id="list"><li class="empty">불러오는 중…</li></ul>
+  </section>
+</main>
+
+<script>
+(() => {
+  const OWNER = 'geatalius', REPO = 'geatalius.github.io', BRANCH = 'main', DIR = 'files';
+  const API = `https://api.github.com/repos/${OWNER}/${REPO}/contents`;
+  const $ = id => document.getElementById(id);
+  const drop = $('drop'), picker = $('picker'), statusEl = $('status'), listEl = $('list'), tokenEl = $('token');
+
+  const store = {
+    get() { try { return localStorage.getItem('gh_token') || ''; } catch { return ''; } },
+    set(v) { try { localStorage.setItem('gh_token', v); } catch {} },
+    del() { try { localStorage.removeItem('gh_token'); } catch {} }
+  };
+
+  const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+  const fmtSize = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
+  const esc = s => s.replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  const say = (msg, cls) => { statusEl.innerHTML = cls ? `<span class="${cls}">${esc(msg)}</span>` : esc(msg); };
+
+  const headers = () => {
+    const h = { 'Accept': 'application/vnd.github+json' };
+    const t = store.get();
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  };
+
+  const toBase64 = file => new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(',')[1] || '');
+    r.onerror = () => reject(new Error('파일을 읽지 못했습니다'));
+    r.readAsDataURL(file);
+  });
+
+  async function loadList() {
+    listEl.innerHTML = '<li class="empty">불러오는 중…</li>';
+    try {
+      const res = await fetch(`${API}/${DIR}?ref=${BRANCH}&t=${Date.now()}`, { headers: headers() });
+      if (res.status === 404) { listEl.innerHTML = '<li class="empty">아직 올린 자료가 없습니다</li>'; return; }
+      if (!res.ok) throw new Error('목록을 불러오지 못했습니다 (' + res.status + ')');
+      const items = (await res.json()).filter(i => i.type === 'file' && i.name !== '.gitkeep');
+      if (!items.length) { listEl.innerHTML = '<li class="empty">아직 올린 자료가 없습니다</li>'; return; }
+      items.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+      listEl.innerHTML = items.map(i =>
+        `<li><a href="${DIR}/${encPath(i.name)}" target="_blank" rel="noopener">${esc(i.name)}</a><span class="size">${fmtSize(i.size)}</span></li>`
+      ).join('');
+    } catch (e) {
+      listEl.innerHTML = `<li class="empty">${esc(e.message)}</li>`;
+    }
+  }
+
+  async function uploadOne(file) {
+    const path = `${DIR}/${file.name}`;
+    let sha;
+    const ex = await fetch(`${API}/${encPath(path)}?ref=${BRANCH}`, { headers: headers() });
+    if (ex.ok) {
+      if (!confirm(`"${file.name}" 파일이 이미 있습니다. 덮어쓸까요?`)) return 'skip';
+      sha = (await ex.json()).sha;
+    }
+    const body = { message: `Upload ${file.name}`, content: await toBase64(file), branch: BRANCH };
+    if (sha) body.sha = sha;
+    const res = await fetch(`${API}/${encPath(path)}`, {
+      method: 'PUT',
+      headers: { ...headers(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      let m = res.status + '';
+      try { m = (await res.json()).message || m; } catch {}
+      throw new Error(m);
+    }
+    return 'ok';
+  }
+
+  async function handleFiles(files) {
+    files = Array.from(files || []);
+    if (!files.length) return;
+    if (!store.get()) {
+      $('settings').open = true;
+      say('먼저 아래 업로드 설정에서 GitHub 토큰을 저장해 주세요.', 'err');
+      return;
+    }
+    let done = 0;
+    for (const f of files) {
+      say(`올리는 중 (${done + 1}/${files.length}): ${f.name}`);
+      try {
+        const r = await uploadOne(f);
+        if (r === 'ok') done++;
+      } catch (e) {
+        say(`${f.name} 업로드 실패: ${e.message}`, 'err');
+        await loadList();
+        return;
+      }
+    }
+    say(`${done}개 업로드 완료. 반영까지 1~2분 걸릴 수 있습니다.`, 'ok');
+    await loadList();
+  }
+
+  drop.addEventListener('click', () => picker.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); picker.click(); } });
+  picker.addEventListener('change', () => { handleFiles(picker.files); picker.value = ''; });
+  ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
+
+  $('saveToken').addEventListener('click', () => {
+    const v = tokenEl.value.trim();
+    if (!v) { say('토큰을 입력해 주세요.', 'err'); return; }
+    store.set(v); tokenEl.value = '';
+    say('토큰을 저장했습니다. 이제 파일을 올릴 수 있습니다.', 'ok');
+    $('settings').open = false;
+  });
+  $('clearToken').addEventListener('click', () => { store.del(); tokenEl.value = ''; say('토큰을 삭제했습니다.'); });
+  $('refresh').addEventListener('click', loadList);
+
+  if (!store.get()) $('settings').open = true;
+  loadList();
+})();
+</script>
 </body>
 </html>
