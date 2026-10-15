@@ -3,85 +3,173 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>자료실</title>
+  <title>Jeong's 자료실</title>
+  <meta name="description" content="자료를 올리고 내려받는 개인 홈페이지">
   <style>
-    :root { --bg:#f5f6f8; --fg:#1f2430; --muted:#6b7280; --accent:#2563eb; --card:#ffffff; --line:#e3e6ec; --ok:#16a34a; --err:#dc2626; }
+    :root {
+      --bg:#f6f7f9; --surface:#ffffff; --fg:#161a23; --muted:#667085; --line:#e4e7ec;
+      --accent:#2f5cff; --accent-2:#6a3dff; --accent-fg:#ffffff; --ok:#12a150; --err:#d92d20;
+      --shadow:0 1px 2px rgba(16,24,40,.06), 0 4px 16px rgba(16,24,40,.06);
+    }
     @media (prefers-color-scheme: dark) {
-      :root { --bg:#14171f; --fg:#e8eaf0; --muted:#9aa3b2; --accent:#6ea0ff; --card:#1d2230; --line:#2b3245; --ok:#4ade80; --err:#f87171; }
+      :root {
+        --bg:#0e1117; --surface:#171b24; --fg:#eef0f5; --muted:#9aa3b5; --line:#262c3a;
+        --accent:#6f8cff; --accent-2:#9a7bff; --accent-fg:#0e1117; --ok:#4ade80; --err:#f87171;
+        --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.35);
+      }
     }
     * { box-sizing:border-box; }
-    body { margin:0; font-family:-apple-system,"Noto Sans KR",sans-serif; background:var(--bg); color:var(--fg); line-height:1.5; }
-    main { max-width:720px; margin:0 auto; padding:24px 16px 64px; }
-    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-    h1 { margin:0; font-size:1.5rem; }
-    h2 { margin:0 0 12px; font-size:1.05rem; }
-    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:16px; }
-    .drop { border:2px dashed var(--line); border-radius:12px; padding:28px 12px; text-align:center; cursor:pointer; color:var(--muted); transition:.15s; }
-    .drop.over { border-color:var(--accent); color:var(--accent); background:rgba(37,99,235,.06); }
-    .drop strong { display:block; color:var(--fg); font-size:1rem; margin-bottom:4px; }
-    button, .btn { font:inherit; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 14px; cursor:pointer; text-decoration:none; display:inline-block; }
-    button.ghost { background:transparent; color:var(--accent); border:1px solid var(--line); }
-    button:disabled { opacity:.5; cursor:default; }
-    input[type=password], input[type=text] { width:100%; font:inherit; padding:10px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); }
-    .row { display:flex; gap:8px; }
-    .hint { font-size:.85rem; color:var(--muted); margin:8px 0 0; }
-    ul { list-style:none; margin:0; padding:0; }
-    li { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--line); }
-    li:first-child { border-top:0; }
-    li a { color:var(--accent); word-break:break-all; text-decoration:none; }
-    li .size { color:var(--muted); font-size:.85rem; white-space:nowrap; }
-    .status { font-size:.9rem; margin-top:10px; min-height:1.2em; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo",sans-serif; background:var(--bg); color:var(--fg); line-height:1.6; -webkit-font-smoothing:antialiased; }
+    a { color:inherit; text-decoration:none; }
+    .wrap { max-width:960px; margin:0 auto; padding:0 20px; }
+
+    /* 상단 메뉴 */
+    nav { position:sticky; top:0; z-index:10; backdrop-filter:blur(10px); background:color-mix(in srgb, var(--bg) 82%, transparent); border-bottom:1px solid var(--line); }
+    nav .wrap { display:flex; align-items:center; justify-content:space-between; height:58px; }
+    .brand { font-weight:800; letter-spacing:-.02em; font-size:1.05rem; }
+    .brand span { background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+    nav ul { display:flex; gap:4px; list-style:none; margin:0; padding:0; }
+    nav li a { display:block; padding:8px 12px; border-radius:8px; color:var(--muted); font-size:.92rem; font-weight:500; }
+    nav li a:hover { background:var(--surface); color:var(--fg); }
+
+    /* 첫 화면 */
+    .hero { padding:72px 0 56px; text-align:center; }
+    .eyebrow { display:inline-block; font-size:.8rem; font-weight:700; letter-spacing:.08em; color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent); padding:6px 12px; border-radius:999px; margin-bottom:18px; }
+    .hero h1 { margin:0 0 14px; font-size:clamp(2rem,6vw,3.2rem); line-height:1.15; letter-spacing:-.03em; }
+    .hero h1 em { font-style:normal; background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+    .hero p { margin:0 auto 28px; max-width:520px; color:var(--muted); font-size:1.05rem; }
+    .hero .cta { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+    /* 버튼 */
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; font:inherit; font-weight:600; font-size:.95rem; border:0; border-radius:10px; padding:11px 18px; cursor:pointer; background:var(--accent); color:var(--accent-fg); transition:transform .1s, filter .15s; }
+    .btn:hover { filter:brightness(1.08); }
+    .btn:active { transform:scale(.97); }
+    .btn:disabled { opacity:.55; cursor:default; }
+    .btn.ghost { background:var(--surface); color:var(--fg); border:1px solid var(--line); }
+    .btn.sm { padding:9px 14px; font-size:.88rem; }
+
+    section.block { padding:40px 0; }
+    .head { display:flex; align-items:end; justify-content:space-between; gap:12px; margin-bottom:20px; }
+    .head h2 { margin:0; font-size:1.5rem; letter-spacing:-.02em; }
+    .head p { margin:4px 0 0; color:var(--muted); font-size:.95rem; }
+
+    /* 자료 카드 */
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; }
+    .file { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:14px; }
+    .file .top { display:flex; gap:12px; align-items:center; min-width:0; }
+    .ico { flex:none; width:44px; height:44px; border-radius:11px; display:grid; place-items:center; font-size:.7rem; font-weight:800; letter-spacing:.02em; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2)); }
+    .ico.apk { background:linear-gradient(135deg,#16a34a,#4ade80); }
+    .ico.pdf { background:linear-gradient(135deg,#dc2626,#f97316); }
+    .ico.img { background:linear-gradient(135deg,#0ea5e9,#22d3ee); }
+    .ico.zip { background:linear-gradient(135deg,#a16207,#f59e0b); }
+    .ico.doc { background:linear-gradient(135deg,#1d4ed8,#60a5fa); }
+    .file .meta { min-width:0; }
+    .file .name { font-weight:600; font-size:.97rem; overflow-wrap:anywhere; line-height:1.35; }
+    .file .sub { color:var(--muted); font-size:.82rem; margin-top:2px; }
+    .file .btn { width:100%; }
+    .empty, .loading { grid-column:1/-1; text-align:center; color:var(--muted); background:var(--surface); border:1px dashed var(--line); border-radius:14px; padding:36px 16px; }
+
+    /* 올리기 */
+    .panel { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:var(--shadow); }
+    .drop { border:2px dashed var(--line); border-radius:14px; padding:34px 14px; text-align:center; cursor:pointer; color:var(--muted); transition:.15s; }
+    .drop strong { display:block; color:var(--fg); font-size:1.02rem; margin-bottom:4px; }
+    .drop.over, .drop:hover { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 7%, transparent); }
+    .status { min-height:1.4em; margin-top:12px; font-size:.92rem; }
     .status .ok { color:var(--ok); } .status .err { color:var(--err); }
-    .empty { color:var(--muted); text-align:center; padding:12px 0; }
-    details summary { cursor:pointer; font-weight:600; }
-    details[open] summary { margin-bottom:12px; }
+    details { margin-top:16px; border-top:1px solid var(--line); padding-top:14px; }
+    summary { cursor:pointer; font-weight:600; font-size:.95rem; }
+    details .body { margin-top:12px; }
+    .row { display:flex; gap:8px; }
+    input[type=password] { flex:1; min-width:0; font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+    .hint { font-size:.84rem; color:var(--muted); margin:10px 0 0; }
+
+    footer { border-top:1px solid var(--line); margin-top:32px; padding:28px 0 40px; color:var(--muted); font-size:.88rem; text-align:center; }
+    footer a { color:var(--accent); }
+
+    @media (max-width:520px) {
+      .hero { padding:48px 0 36px; }
+      nav li a { padding:8px 9px; }
+    }
   </style>
 </head>
 <body>
-<main>
-  <header>
-    <h1>📁 자료실</h1>
-    <a href="https://github.com/geatalius/geatalius.github.io/tree/main/files" target="_blank" rel="noopener" style="color:var(--accent);font-size:.9rem">GitHub에서 보기</a>
-  </header>
 
-  <section class="card">
-    <h2>자료 올리기</h2>
-    <div class="drop" id="drop" tabindex="0" role="button" aria-label="파일 선택">
-      <strong>파일을 끌어다 놓거나 눌러서 선택</strong>
-      여러 개를 한 번에 올릴 수 있습니다 (파일당 약 25MB 이하)
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top"><span>Jeong's</span> 자료실</a>
+    <ul>
+      <li><a href="#files">자료</a></li>
+      <li><a href="#upload">올리기</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="eyebrow">DOWNLOAD CENTER</span>
+    <h1>필요한 자료를<br><em>버튼 한 번</em>으로 내려받으세요</h1>
+    <p>앱, 문서, 이미지 등 공유하는 자료를 한곳에 모았습니다. 원하는 파일의 다운로드 버튼을 누르면 바로 받을 수 있습니다.</p>
+    <div class="cta">
+      <a class="btn" href="#files">자료 보기</a>
+      <a class="btn ghost" href="#upload">자료 올리기</a>
     </div>
-    <input type="file" id="picker" multiple hidden>
-    <div class="status" id="status" aria-live="polite"></div>
-  </section>
+  </div>
+</header>
 
-  <section class="card">
-    <details id="settings">
-      <summary>⚙️ 업로드 설정 (처음 한 번)</summary>
-      <label for="token" style="font-size:.9rem">GitHub 토큰</label>
-      <div class="row" style="margin-top:6px">
-        <input type="password" id="token" placeholder="github_pat_..." autocomplete="off">
-        <button id="saveToken">저장</button>
+<main class="wrap">
+  <section class="block" id="files">
+    <div class="head">
+      <div>
+        <h2>자료실</h2>
+        <p id="count">자료를 불러오는 중…</p>
       </div>
-      <p class="hint">GitHub → Settings → Developer settings → Fine-grained tokens에서 이 레파짓(geatalius.github.io)만 선택하고 Contents 권한을 Read and write로 만든 토큰입니다. 이 브라우저에만 저장되고 다른 곳으로 전송되지 않습니다. 공용 기기에서는 사용 후 삭제하세요.</p>
-      <button class="ghost" id="clearToken" style="margin-top:8px">토큰 삭제</button>
-    </details>
+      <button class="btn ghost sm" id="refresh" type="button">새로고침</button>
+    </div>
+    <div class="grid" id="grid"><div class="loading">불러오는 중…</div></div>
   </section>
 
-  <section class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <h2 style="margin:0">올린 자료</h2>
-      <button class="ghost" id="refresh">새로고침</button>
+  <section class="block" id="upload">
+    <div class="head">
+      <div>
+        <h2>자료 올리기</h2>
+        <p>파일을 끌어다 놓거나 눌러서 선택하세요. 여러 개도 가능합니다 (파일당 약 25MB 이하).</p>
+      </div>
     </div>
-    <ul id="list"><li class="empty">불러오는 중…</li></ul>
+    <div class="panel">
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="파일 선택">
+        <strong>📤 여기에 파일을 놓거나 눌러서 선택</strong>
+        올린 파일은 위 자료실에 바로 나타납니다
+      </div>
+      <input type="file" id="picker" multiple hidden>
+      <div class="status" id="status" aria-live="polite"></div>
+
+      <details id="settings">
+        <summary>⚙️ 업로드 설정 (처음 한 번)</summary>
+        <div class="body">
+          <div class="row">
+            <input type="password" id="token" placeholder="GitHub 토큰 (github_pat_...)" autocomplete="off" aria-label="GitHub 토큰">
+            <button class="btn sm" id="saveToken" type="button">저장</button>
+          </div>
+          <p class="hint">GitHub → Settings → Developer settings → Fine-grained tokens에서 <b>geatalius.github.io</b> 레파짓만 선택하고 Contents 권한을 Read and write로 만든 토큰입니다. 이 기기의 브라우저에만 저장됩니다. 공용 기기에서는 사용 후 삭제하세요.</p>
+          <button class="btn ghost sm" id="clearToken" type="button" style="margin-top:10px">저장된 토큰 삭제</button>
+        </div>
+      </details>
+    </div>
   </section>
 </main>
+
+<footer>
+  <div class="wrap">© <span id="year"></span> Jeong · <a href="https://github.com/geatalius" target="_blank" rel="noopener">GitHub</a></div>
+</footer>
 
 <script>
 (() => {
   const OWNER = 'geatalius', REPO = 'geatalius.github.io', BRANCH = 'main', DIR = 'files';
   const API = `https://api.github.com/repos/${OWNER}/${REPO}/contents`;
   const $ = id => document.getElementById(id);
-  const drop = $('drop'), picker = $('picker'), statusEl = $('status'), listEl = $('list'), tokenEl = $('token');
+  const grid = $('grid'), drop = $('drop'), picker = $('picker'), statusEl = $('status'), tokenEl = $('token');
+  $('year').textContent = new Date().getFullYear();
 
   const store = {
     get() { try { return localStorage.getItem('gh_token') || ''; } catch { return ''; } },
@@ -90,9 +178,20 @@
   };
 
   const encPath = p => p.split('/').map(encodeURIComponent).join('/');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const fmtSize = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
-  const esc = s => s.replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const say = (msg, cls) => { statusEl.innerHTML = cls ? `<span class="${cls}">${esc(msg)}</span>` : esc(msg); };
+
+  const ext = name => (name.split('.').pop() || '').toLowerCase();
+  const kind = name => {
+    const e = ext(name);
+    if (e === 'apk') return ['apk', 'APK'];
+    if (e === 'pdf') return ['pdf', 'PDF'];
+    if (['png','jpg','jpeg','gif','webp','svg'].includes(e)) return ['img', e.toUpperCase()];
+    if (['zip','7z','rar','tar','gz'].includes(e)) return ['zip', e.toUpperCase()];
+    if (['doc','docx','hwp','hwpx','txt','md','ppt','pptx','xls','xlsx','csv'].includes(e)) return ['doc', e.toUpperCase()];
+    return ['', (e || 'FILE').slice(0, 4).toUpperCase()];
+  };
 
   const headers = () => {
     const h = { 'Accept': 'application/vnd.github+json' };
@@ -101,29 +200,68 @@
     return h;
   };
 
+  function saveBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  async function download(btn, item) {
+    const label = btn.textContent;
+    btn.disabled = true; btn.textContent = '받는 중…';
+    try {
+      const res = await fetch(item.download_url);
+      if (!res.ok) throw new Error(res.status);
+      saveBlob(await res.blob(), item.name);
+      btn.textContent = '✔ 완료';
+    } catch (e) {
+      // 대체 경로: 페이지에 게시된 파일 직접 열기
+      window.open(`${DIR}/${encPath(item.name)}`, '_blank', 'noopener');
+      btn.textContent = label;
+    }
+    setTimeout(() => { btn.disabled = false; btn.textContent = label; }, 2000);
+  }
+
+  async function loadList() {
+    grid.innerHTML = '<div class="loading">불러오는 중…</div>';
+    try {
+      const res = await fetch(`${API}/${DIR}?ref=${BRANCH}&t=${Date.now()}`, { headers: headers() });
+      if (res.status === 404) return renderList([]);
+      if (!res.ok) throw new Error('목록을 불러오지 못했습니다 (' + res.status + ')');
+      const items = (await res.json()).filter(i => i.type === 'file' && i.name !== '.gitkeep');
+      items.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+      renderList(items);
+    } catch (e) {
+      $('count').textContent = '';
+      grid.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    }
+  }
+
+  function renderList(items) {
+    $('count').textContent = items.length ? `총 ${items.length}개의 자료` : '';
+    if (!items.length) { grid.innerHTML = '<div class="empty">아직 올린 자료가 없습니다.<br>아래에서 첫 자료를 올려 보세요.</div>'; return; }
+    grid.innerHTML = '';
+    items.forEach(it => {
+      const [cls, label] = kind(it.name);
+      const card = document.createElement('article');
+      card.className = 'file';
+      card.innerHTML =
+        `<div class="top"><div class="ico ${cls}">${esc(label)}</div>` +
+        `<div class="meta"><div class="name">${esc(it.name)}</div><div class="sub">${fmtSize(it.size)}</div></div></div>` +
+        `<button class="btn" type="button">⬇ 다운로드</button>`;
+      card.querySelector('button').addEventListener('click', e => download(e.currentTarget, it));
+      grid.appendChild(card);
+    });
+  }
+
   const toBase64 = file => new Promise((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result).split(',')[1] || '');
     r.onerror = () => reject(new Error('파일을 읽지 못했습니다'));
     r.readAsDataURL(file);
   });
-
-  async function loadList() {
-    listEl.innerHTML = '<li class="empty">불러오는 중…</li>';
-    try {
-      const res = await fetch(`${API}/${DIR}?ref=${BRANCH}&t=${Date.now()}`, { headers: headers() });
-      if (res.status === 404) { listEl.innerHTML = '<li class="empty">아직 올린 자료가 없습니다</li>'; return; }
-      if (!res.ok) throw new Error('목록을 불러오지 못했습니다 (' + res.status + ')');
-      const items = (await res.json()).filter(i => i.type === 'file' && i.name !== '.gitkeep');
-      if (!items.length) { listEl.innerHTML = '<li class="empty">아직 올린 자료가 없습니다</li>'; return; }
-      items.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-      listEl.innerHTML = items.map(i =>
-        `<li><a href="${DIR}/${encPath(i.name)}" target="_blank" rel="noopener">${esc(i.name)}</a><span class="size">${fmtSize(i.size)}</span></li>`
-      ).join('');
-    } catch (e) {
-      listEl.innerHTML = `<li class="empty">${esc(e.message)}</li>`;
-    }
-  }
 
   async function uploadOne(file) {
     const path = `${DIR}/${file.name}`;
@@ -141,7 +279,7 @@
       body: JSON.stringify(body)
     });
     if (!res.ok) {
-      let m = res.status + '';
+      let m = String(res.status);
       try { m = (await res.json()).message || m; } catch {}
       throw new Error(m);
     }
@@ -160,15 +298,14 @@
     for (const f of files) {
       say(`올리는 중 (${done + 1}/${files.length}): ${f.name}`);
       try {
-        const r = await uploadOne(f);
-        if (r === 'ok') done++;
+        if (await uploadOne(f) === 'ok') done++;
       } catch (e) {
         say(`${f.name} 업로드 실패: ${e.message}`, 'err');
         await loadList();
         return;
       }
     }
-    say(`${done}개 업로드 완료. 반영까지 1~2분 걸릴 수 있습니다.`, 'ok');
+    say(`${done}개 업로드 완료!`, 'ok');
     await loadList();
   }
 
