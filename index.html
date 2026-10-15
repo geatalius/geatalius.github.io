@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jeong's Web</title>
+  <style>
+    :root { --bg:#f7f8fa; --fg:#1f2430; --accent:#2563eb; --card:#ffffff; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#14171f; --fg:#e8eaf0; --accent:#6ea0ff; --card:#1d2230; }
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:-apple-system,"Noto Sans KR",sans-serif; background:var(--bg); color:var(--fg); line-height:1.6; }
+    main { max-width:680px; margin:0 auto; padding:48px 16px; }
+    h1 { margin:0 0 8px; font-size:1.8rem; }
+    p.sub { margin:0 0 32px; opacity:.7; }
+    .card { background:var(--card); border-radius:12px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    a { color:var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>안녕하세요 👋</h1>
+    <p class="sub">GitHub Pages로 운영되는 웹페이지입니다.</p>
+    <div class="card">
+      <p>이 페이지는 <code>index.html</code> 파일입니다. 내용을 수정해서 저장소에 올리면 바로 반영됩니다.</p>
+      <p><a href="https://github.com/geatalius" target="_blank" rel="noopener">GitHub 프로필</a></p>
+    </div>
+  </main>
+</body>
+</html>
