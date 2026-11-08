@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jeong's 자료실</title>
-  <meta name="description" content="자료를 올리고 내려받는 개인 홈페이지">
+  <title>Jeong's Home</title>
+  <meta name="description" content="Jeong의 개인 홈페이지 — 게시판, 자료실, 방명록">
   <style>
     :root {
-      --bg:#f6f7f9; --surface:#ffffff; --fg:#161a23; --muted:#667085; --line:#e4e7ec;
+      --bg:#f4f5f8; --surface:#ffffff; --fg:#161a23; --muted:#667085; --line:#e4e7ec;
       --accent:#2f5cff; --accent-2:#6a3dff; --accent-fg:#ffffff; --ok:#12a150; --err:#d92d20;
+      --soft:color-mix(in srgb, var(--accent) 9%, transparent);
       --shadow:0 1px 2px rgba(16,24,40,.06), 0 4px 16px rgba(16,24,40,.06);
     }
     @media (prefers-color-scheme: dark) {
@@ -19,27 +20,67 @@
       }
     }
     * { box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
     body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo",sans-serif; background:var(--bg); color:var(--fg); line-height:1.6; -webkit-font-smoothing:antialiased; }
     a { color:inherit; text-decoration:none; }
-    .wrap { max-width:960px; margin:0 auto; padding:0 20px; }
+    .wrap { max-width:1080px; margin:0 auto; padding:0 16px; }
 
-    /* 상단 메뉴 */
-    nav { position:sticky; top:0; z-index:10; backdrop-filter:blur(10px); background:color-mix(in srgb, var(--bg) 82%, transparent); border-bottom:1px solid var(--line); }
-    nav .wrap { display:flex; align-items:center; justify-content:space-between; height:58px; }
-    .brand { font-weight:800; letter-spacing:-.02em; font-size:1.05rem; }
+    /* 상단 바 */
+    nav.top { position:sticky; top:0; z-index:10; backdrop-filter:blur(10px); background:color-mix(in srgb, var(--bg) 82%, transparent); border-bottom:1px solid var(--line); }
+    nav.top .wrap { display:flex; align-items:center; justify-content:space-between; gap:12px; height:58px; }
+    .brand { font-weight:800; letter-spacing:-.02em; font-size:1.05rem; white-space:nowrap; }
     .brand span { background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
-    nav ul { display:flex; gap:4px; list-style:none; margin:0; padding:0; }
-    nav li a { display:block; padding:8px 12px; border-radius:8px; color:var(--muted); font-size:.92rem; font-weight:500; }
-    nav li a:hover { background:var(--surface); color:var(--fg); }
+    .tabs { display:flex; gap:2px; list-style:none; margin:0; padding:0; overflow-x:auto; scrollbar-width:none; }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tabs a { display:block; padding:8px 12px; border-radius:8px; color:var(--muted); font-size:.92rem; font-weight:500; white-space:nowrap; }
+    .tabs a:hover { background:var(--surface); color:var(--fg); }
+    .tabs a.on { background:var(--soft); color:var(--accent); font-weight:700; }
 
-    /* 첫 화면 */
-    .hero { padding:72px 0 56px; text-align:center; }
-    .eyebrow { display:inline-block; font-size:.8rem; font-weight:700; letter-spacing:.08em; color:var(--accent); background:color-mix(in srgb, var(--accent) 12%, transparent); padding:6px 12px; border-radius:999px; margin-bottom:18px; }
-    .hero h1 { margin:0 0 14px; font-size:clamp(2rem,6vw,3.2rem); line-height:1.15; letter-spacing:-.03em; }
-    .hero h1 em { font-style:normal; background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
-    .hero p { margin:0 auto 28px; max-width:520px; color:var(--muted); font-size:1.05rem; }
-    .hero .cta { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    /* 레이아웃 */
+    .layout { display:grid; grid-template-columns:280px minmax(0,1fr); gap:20px; padding:24px 0 8px; align-items:start; }
+    aside { display:flex; flex-direction:column; gap:14px; position:sticky; top:78px; }
+    .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:18px; box-shadow:var(--shadow); }
+    .card h3 { margin:0 0 12px; font-size:.95rem; letter-spacing:-.01em; }
+
+    /* 프로필 */
+    .profile { text-align:center; }
+    .avatar { width:96px; height:96px; border-radius:50%; margin:4px auto 12px; display:block; object-fit:cover; background:linear-gradient(135deg,var(--accent),var(--accent-2)); border:3px solid var(--surface); box-shadow:0 0 0 2px var(--accent); }
+    .profile h2 { margin:0; font-size:1.2rem; letter-spacing:-.02em; }
+    .profile .bio { color:var(--muted); font-size:.9rem; margin:6px 0 14px; }
+    .links { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+    .chip { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:600; padding:6px 12px; border-radius:999px; background:var(--soft); color:var(--accent); }
+
+    /* 방문자 */
+    .visit { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .visit div { background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:10px; text-align:center; }
+    .visit b { display:block; font-size:1.35rem; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+    .visit b.today { color:var(--accent); }
+    .visit span { font-size:.78rem; color:var(--muted); }
+    .visit-note { font-size:.8rem; color:var(--muted); margin:10px 0 0; text-align:center; }
+
+    .mini { list-style:none; margin:0; padding:0; }
+    .mini li { border-top:1px solid var(--line); }
+    .mini li:first-child { border-top:0; }
+    .mini button { width:100%; text-align:left; background:none; border:0; color:inherit; font:inherit; font-size:.88rem; padding:8px 0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .mini button:hover { color:var(--accent); }
+    .mini .none { color:var(--muted); font-size:.85rem; padding:6px 0; }
+
+    /* 화면(뷰) */
+    .view[hidden] { display:none; }
+    .head { display:flex; align-items:end; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+    .head h2 { margin:0; font-size:1.45rem; letter-spacing:-.02em; }
+    .head p { margin:2px 0 0; color:var(--muted); font-size:.92rem; }
+    .head .btns { display:flex; gap:8px; }
+
+    .welcome { padding:28px 24px; background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--surface)), color-mix(in srgb, var(--accent-2) 14%, var(--surface))); }
+    .welcome .eyebrow { display:inline-block; font-size:.75rem; font-weight:700; letter-spacing:.08em; color:var(--accent); background:var(--surface); padding:5px 11px; border-radius:999px; margin-bottom:12px; }
+    .welcome h1 { margin:0 0 8px; font-size:clamp(1.6rem,4.5vw,2.3rem); line-height:1.2; letter-spacing:-.03em; }
+    .welcome p { margin:0; color:var(--muted); max-width:560px; }
+    .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:16px 0; }
+    .stat { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:var(--shadow); cursor:pointer; text-align:left; font:inherit; color:inherit; }
+    .stat:hover { border-color:var(--accent); }
+    .stat b { display:block; font-size:1.5rem; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+    .stat span { color:var(--muted); font-size:.82rem; }
+    .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 
     /* 버튼 */
     .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; font:inherit; font-weight:600; font-size:.95rem; border:0; border-radius:10px; padding:11px 18px; cursor:pointer; background:var(--accent); color:var(--accent-fg); transition:transform .1s, filter .15s; }
@@ -47,15 +88,11 @@
     .btn:active { transform:scale(.97); }
     .btn:disabled { opacity:.55; cursor:default; }
     .btn.ghost { background:var(--surface); color:var(--fg); border:1px solid var(--line); }
-    .btn.sm { padding:9px 14px; font-size:.88rem; }
-
-    section.block { padding:40px 0; }
-    .head { display:flex; align-items:end; justify-content:space-between; gap:12px; margin-bottom:20px; }
-    .head h2 { margin:0; font-size:1.5rem; letter-spacing:-.02em; }
-    .head p { margin:4px 0 0; color:var(--muted); font-size:.95rem; }
+    .btn.sm { padding:8px 13px; font-size:.86rem; }
+    .btn.danger { background:var(--err); color:#fff; }
 
     /* 자료 카드 */
-    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; }
     .file { background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:14px; }
     .file .top { display:flex; gap:12px; align-items:center; min-width:0; }
     .ico { flex:none; width:44px; height:44px; border-radius:11px; display:grid; place-items:center; font-size:.7rem; font-weight:800; letter-spacing:.02em; color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent-2)); }
@@ -65,190 +102,337 @@
     .ico.zip { background:linear-gradient(135deg,#a16207,#f59e0b); }
     .ico.doc { background:linear-gradient(135deg,#1d4ed8,#60a5fa); }
     .file .meta { min-width:0; }
-    .file .name { font-weight:600; font-size:.97rem; overflow-wrap:anywhere; line-height:1.35; }
+    .file .name { font-weight:600; font-size:.95rem; overflow-wrap:anywhere; line-height:1.35; }
     .file .sub { color:var(--muted); font-size:.82rem; margin-top:2px; }
-    .file .btn { width:100%; }
-    .empty, .loading { grid-column:1/-1; text-align:center; color:var(--muted); background:var(--surface); border:1px dashed var(--line); border-radius:14px; padding:36px 16px; }
+    .file .acts { display:flex; gap:8px; }
+    .file .acts .btn:first-child { flex:1; }
+    .empty, .loading { grid-column:1/-1; text-align:center; color:var(--muted); background:var(--surface); border:1px dashed var(--line); border-radius:14px; padding:32px 16px; }
 
-    /* 올리기 */
-    .panel { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:var(--shadow); }
-    .drop { border:2px dashed var(--line); border-radius:14px; padding:34px 14px; text-align:center; cursor:pointer; color:var(--muted); transition:.15s; }
-    .drop strong { display:block; color:var(--fg); font-size:1.02rem; margin-bottom:4px; }
-    .drop.over, .drop:hover { border-color:var(--accent); background:color-mix(in srgb, var(--accent) 7%, transparent); }
-    .status { min-height:1.4em; margin-top:12px; font-size:.92rem; }
+    /* 업로드 */
+    .drop { border:2px dashed var(--line); border-radius:14px; padding:26px 14px; text-align:center; cursor:pointer; color:var(--muted); transition:.15s; margin-top:16px; }
+    .drop strong { display:block; color:var(--fg); margin-bottom:2px; }
+    .drop.over, .drop:hover { border-color:var(--accent); background:var(--soft); }
+    .status { min-height:1.4em; margin:10px 0; font-size:.9rem; }
+    .status:empty { margin:0; min-height:0; }
     .status .ok { color:var(--ok); } .status .err { color:var(--err); }
-    details { margin-top:16px; border-top:1px solid var(--line); padding-top:14px; }
-    summary { cursor:pointer; font-weight:600; font-size:.95rem; }
-    details .body { margin-top:12px; }
     .row { display:flex; gap:8px; }
-    input[type=password] { flex:1; min-width:0; font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
     .hint { font-size:.84rem; color:var(--muted); margin:10px 0 0; }
 
     /* 게시판 */
+    .search { margin-bottom:12px; }
     .post-list { list-style:none; margin:0; padding:0; background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; }
     .post-list li { border-top:1px solid var(--line); }
     .post-list li:first-child { border-top:0; }
-    .post-item { display:flex; justify-content:space-between; align-items:center; gap:14px; width:100%; text-align:left; background:none; border:0; color:inherit; font:inherit; padding:14px 16px; cursor:pointer; }
-    .post-item:hover { background:color-mix(in srgb, var(--accent) 6%, transparent); }
-    .post-title { font-weight:600; overflow-wrap:anywhere; }
+    .post-item { display:flex; justify-content:space-between; align-items:center; gap:14px; width:100%; text-align:left; background:none; border:0; color:inherit; font:inherit; padding:13px 16px; cursor:pointer; }
+    .post-item:hover { background:var(--soft); }
+    .post-no { color:var(--muted); font-size:.82rem; width:2.2em; flex:none; font-variant-numeric:tabular-nums; }
+    .post-title { font-weight:600; overflow-wrap:anywhere; flex:1; }
     .post-meta { color:var(--muted); font-size:.82rem; white-space:nowrap; text-align:right; }
-    .post-list .empty-row { text-align:center; color:var(--muted); padding:32px 16px; }
+    .post-list .empty-row { text-align:center; color:var(--muted); padding:30px 16px; }
+    .pager { display:flex; gap:6px; justify-content:center; margin-top:14px; flex-wrap:wrap; }
+    .pager button { min-width:36px; }
+    .pager button.on { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
     .compose { margin-bottom:14px; }
     .compose[hidden] { display:none; }
-    .compose label { display:block; font-size:.88rem; font-weight:600; margin:12px 0 6px; }
-    .compose label:first-of-type { margin-top:0; }
-    input[type=text], textarea { width:100%; font:inherit; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
+    label.f { display:block; font-size:.88rem; font-weight:600; margin:12px 0 6px; }
+    label.f:first-child { margin-top:0; }
+    input[type=text], input[type=password], input[type=search], textarea { width:100%; min-width:0; font:inherit; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg); color:var(--fg); }
     textarea { min-height:140px; resize:vertical; }
-    .compose .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
-    dialog { border:1px solid var(--line); border-radius:16px; background:var(--surface); color:var(--fg); width:calc(100% - 32px); max-width:640px; padding:22px; box-shadow:var(--shadow); }
-    dialog { max-height:90vh; overflow-y:auto; }
+    .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:14px; }
+
+    dialog { border:1px solid var(--line); border-radius:16px; background:var(--surface); color:var(--fg); width:calc(100% - 32px); max-width:680px; max-height:90vh; overflow-y:auto; padding:22px; box-shadow:var(--shadow); }
     dialog::backdrop { background:rgba(0,0,0,.45); }
-    .comments { border-top:1px solid var(--line); padding-top:16px; min-height:80px; }
-    .comments h4 { margin:0 0 10px; font-size:1rem; }
     dialog h3 { margin:0 0 4px; font-size:1.25rem; letter-spacing:-.02em; overflow-wrap:anywhere; }
     .post-body { white-space:pre-wrap; overflow-wrap:anywhere; margin:16px 0; padding-top:14px; border-top:1px solid var(--line); }
-    dialog .actions { display:flex; gap:8px; justify-content:flex-end; }
-    .btn.danger { background:var(--err); color:#fff; }
+    .comments { border-top:1px solid var(--line); padding-top:16px; min-height:80px; }
+    .comments h4, .gb h4 { margin:0 0 10px; font-size:1rem; }
 
-    footer { border-top:1px solid var(--line); margin-top:32px; padding:28px 0 40px; color:var(--muted); font-size:.88rem; text-align:center; }
+    footer { border-top:1px solid var(--line); margin-top:28px; padding:24px 0 36px; color:var(--muted); font-size:.86rem; text-align:center; }
     footer a { color:var(--accent); }
 
+    @media (max-width:860px) {
+      .layout { grid-template-columns:1fr; }
+      aside { position:static; }
+      .side-extra { display:none; }
+      .stats { grid-template-columns:repeat(2,1fr); }
+      .two { grid-template-columns:1fr; }
+    }
     @media (max-width:520px) {
-      .hero { padding:48px 0 36px; }
-      nav li a { padding:8px 9px; }
+      .brand { display:none; }
+      nav.top .wrap { justify-content:center; }
+      .post-no { display:none; }
     }
   </style>
 </head>
 <body>
 
-<nav>
+<nav class="top">
   <div class="wrap">
-    <a class="brand" href="#top"><span>Jeong's</span> 자료실</a>
-    <ul>
-      <li><a href="#files">자료</a></li>
-      <li><a href="#board">게시판</a></li>
-      <li><a href="#upload">올리기</a></li>
+    <a class="brand" href="#home"><span>Jeong's</span> Home</a>
+    <ul class="tabs" id="tabs">
+      <li><a href="#home" data-v="home">🏠 홈</a></li>
+      <li><a href="#board" data-v="board">📝 게시판</a></li>
+      <li><a href="#files" data-v="files">📁 자료실</a></li>
+      <li><a href="#guestbook" data-v="guestbook">📖 방명록</a></li>
     </ul>
   </div>
 </nav>
 
-<header class="hero" id="top">
-  <div class="wrap">
-    <span class="eyebrow">DOWNLOAD CENTER</span>
-    <h1>필요한 자료를<br><em>버튼 한 번</em>으로 내려받으세요</h1>
-    <p>앱, 문서, 이미지 등 공유하는 자료를 한곳에 모았습니다. 원하는 파일의 다운로드 버튼을 누르면 바로 받을 수 있습니다.</p>
-    <div class="cta">
-      <a class="btn" href="#files">자료 보기</a>
-      <a class="btn ghost" href="#upload">자료 올리기</a>
-    </div>
-  </div>
-</header>
-
-<main class="wrap">
-  <section class="block" id="files">
-    <div class="head">
-      <div>
-        <h2>자료실</h2>
-        <p id="count">자료를 불러오는 중…</p>
-      </div>
-      <button class="btn ghost sm" id="refresh" type="button">새로고침</button>
-    </div>
-    <div class="grid" id="grid"><div class="loading">불러오는 중…</div></div>
-  </section>
-
-  <section class="block" id="board">
-    <div class="head">
-      <div>
-        <h2>게시판</h2>
-        <p id="boardCount">글을 불러오는 중…</p>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn ghost sm" id="boardRefresh" type="button">새로고침</button>
-        <button class="btn sm" id="newPost" type="button">✏️ 글쓰기</button>
+<div class="wrap layout">
+  <aside>
+    <div class="card profile">
+      <img class="avatar" src="https://github.com/geatalius.png?size=200" alt="프로필 사진" onerror="this.removeAttribute('src')">
+      <h2>Jeong</h2>
+      <p class="bio">직접 만든 앱과 프로그램을 공유하는 공간입니다.<br>Claude Code로 이것저것 만들고 있어요.</p>
+      <div class="links">
+        <a class="chip" href="https://github.com/geatalius" target="_blank" rel="noopener">GitHub</a>
+        <a class="chip" href="#guestbook">방명록 남기기</a>
       </div>
     </div>
 
-    <form class="panel compose" id="compose" hidden>
-      <label for="pAuthor">작성자</label>
-      <input type="text" id="pAuthor" maxlength="30" placeholder="이름" autocomplete="off">
-      <label for="pTitle">제목</label>
-      <input type="text" id="pTitle" maxlength="100" placeholder="제목을 입력하세요" autocomplete="off">
-      <label for="pBody">내용</label>
-      <textarea id="pBody" maxlength="5000" placeholder="내용을 입력하세요"></textarea>
-      <div class="actions">
-        <button class="btn ghost sm" id="cancelPost" type="button">취소</button>
-        <button class="btn sm" id="submitPost" type="submit">등록</button>
+    <div class="card">
+      <h3>👣 방문자</h3>
+      <div class="visit">
+        <div><b class="today" id="vToday">–</b><span>오늘</span></div>
+        <div><b id="vTotal">–</b><span>전체</span></div>
       </div>
-      <p class="hint">글쓰기는 업로드 설정에 GitHub 토큰을 저장한 기기에서만 가능합니다. 누구나 읽을 수 있습니다.</p>
-    </form>
-    <div class="status" id="boardStatus" aria-live="polite" style="margin:0 0 10px"></div>
-
-    <ul class="post-list" id="postList"><li class="empty-row">불러오는 중…</li></ul>
-  </section>
-
-  <dialog id="postDialog">
-    <h3 id="dTitle"></h3>
-    <div class="post-meta" id="dMeta" style="text-align:left;white-space:normal"></div>
-    <div class="post-body" id="dBody"></div>
-    <div class="actions" style="margin-bottom:18px">
-      <button class="btn danger sm" id="dDelete" type="button" hidden>삭제</button>
-      <button class="btn ghost sm" id="dClose" type="button">닫기</button>
+      <p class="visit-note" id="vNote"></p>
     </div>
-    <div class="comments" id="comments"></div>
-  </dialog>
 
-  <section class="block" id="upload">
-    <div class="head">
-      <div>
-        <h2>자료 올리기</h2>
-        <p>파일을 끌어다 놓거나 눌러서 선택하세요. 여러 개도 가능합니다 (파일당 약 25MB 이하).</p>
-      </div>
+    <div class="card side-extra">
+      <h3>🆕 최근 글</h3>
+      <ul class="mini" id="sideRecent"><li class="none">불러오는 중…</li></ul>
     </div>
-    <div class="panel">
-      <div class="drop" id="drop" tabindex="0" role="button" aria-label="파일 선택">
-        <strong>📤 여기에 파일을 놓거나 눌러서 선택</strong>
-        올린 파일은 위 자료실에 바로 나타납니다
-      </div>
-      <input type="file" id="picker" multiple hidden>
-      <div class="status" id="status" aria-live="polite"></div>
+  </aside>
 
-      <details id="settings">
-        <summary>⚙️ 업로드 설정 (처음 한 번)</summary>
-        <div class="body">
-          <div class="row">
-            <input type="password" id="token" placeholder="GitHub 토큰 (github_pat_...)" autocomplete="off" aria-label="GitHub 토큰">
-            <button class="btn sm" id="saveToken" type="button">저장</button>
-          </div>
-          <p class="hint">GitHub → Settings → Developer settings → Fine-grained tokens에서 <b>geatalius.github.io</b> 레파짓만 선택하고 Contents 권한을 Read and write로 만든 토큰입니다. 이 기기의 브라우저에만 저장됩니다. 공용 기기에서는 사용 후 삭제하세요.</p>
-          <button class="btn ghost sm" id="clearToken" type="button" style="margin-top:10px">저장된 토큰 삭제</button>
+  <main>
+    <!-- 홈 -->
+    <section class="view" id="v-home">
+      <div class="card welcome">
+        <span class="eyebrow">WELCOME</span>
+        <h1>안녕하세요, Jeong의<br>홈페이지에 오신 걸 환영합니다 👋</h1>
+        <p>게시판에서 소식을 확인하고, 자료실에서 앱과 파일을 내려받고, 방명록에 한마디 남겨 주세요.</p>
+      </div>
+      <div class="stats">
+        <button class="stat" type="button" data-go="board"><b id="sPosts">–</b><span>게시글</span></button>
+        <button class="stat" type="button" data-go="files"><b id="sFiles">–</b><span>자료</span></button>
+        <button class="stat" type="button" data-go="guestbook"><b id="sToday">–</b><span>오늘 방문</span></button>
+        <button class="stat" type="button" data-go="guestbook"><b id="sTotal">–</b><span>전체 방문</span></button>
+      </div>
+      <div class="two">
+        <div class="card">
+          <div class="head" style="margin-bottom:8px"><h3 style="margin:0">📝 최근 게시글</h3><a class="chip" href="#board">더보기</a></div>
+          <ul class="mini" id="homePosts"><li class="none">불러오는 중…</li></ul>
         </div>
-      </details>
-    </div>
-  </section>
-</main>
+        <div class="card">
+          <div class="head" style="margin-bottom:8px"><h3 style="margin:0">📁 최근 자료</h3><a class="chip" href="#files">더보기</a></div>
+          <ul class="mini" id="homeFiles"><li class="none">불러오는 중…</li></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 게시판 -->
+    <section class="view" id="v-board" hidden>
+      <div class="head">
+        <div><h2>게시판</h2><p id="boardCount">글을 불러오는 중…</p></div>
+        <div class="btns">
+          <button class="btn ghost sm" id="boardRefresh" type="button">새로고침</button>
+          <button class="btn sm" id="newPost" type="button">✏️ 글쓰기</button>
+        </div>
+      </div>
+
+      <form class="card compose" id="compose" hidden>
+        <label class="f" for="pAuthor">작성자</label>
+        <input type="text" id="pAuthor" maxlength="30" placeholder="이름" autocomplete="off">
+        <label class="f" for="pTitle">제목</label>
+        <input type="text" id="pTitle" maxlength="100" placeholder="제목을 입력하세요" autocomplete="off">
+        <label class="f" for="pBody">내용</label>
+        <textarea id="pBody" maxlength="5000" placeholder="내용을 입력하세요"></textarea>
+        <div class="actions">
+          <button class="btn ghost sm" id="cancelPost" type="button">취소</button>
+          <button class="btn sm" id="submitPost" type="submit">등록</button>
+        </div>
+      </form>
+      <div class="status" id="boardStatus" aria-live="polite"></div>
+
+      <input class="search" type="search" id="postSearch" placeholder="🔍 제목·내용 검색" aria-label="게시글 검색">
+      <ul class="post-list" id="postList"><li class="empty-row">불러오는 중…</li></ul>
+      <div class="pager" id="pager"></div>
+    </section>
+
+    <!-- 자료실 -->
+    <section class="view" id="v-files" hidden>
+      <div class="head">
+        <div><h2>자료실</h2><p id="count">자료를 불러오는 중…</p></div>
+        <div class="btns"><button class="btn ghost sm" id="refresh" type="button">새로고침</button></div>
+      </div>
+      <input class="search" type="search" id="fileSearch" placeholder="🔍 파일 이름 검색" aria-label="자료 검색">
+      <div class="grid" id="grid"><div class="loading">불러오는 중…</div></div>
+
+      <div class="card" style="margin-top:20px">
+        <h3>📤 자료 올리기 <span style="font-weight:400;color:var(--muted);font-size:.85rem">· 관리자 전용</span></h3>
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="파일 선택">
+          <strong>여기에 파일을 놓거나 눌러서 선택</strong>
+          여러 개 가능 · 파일당 약 25MB 이하
+        </div>
+        <input type="file" id="picker" multiple hidden>
+        <div class="status" id="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 방명록 -->
+    <section class="view" id="v-guestbook" hidden>
+      <div class="head">
+        <div><h2>방명록</h2><p>다녀가신 흔적을 남겨 주세요. GitHub 계정으로 로그인하면 글을 남길 수 있습니다.</p></div>
+      </div>
+      <div class="card gb" id="guestbook"></div>
+    </section>
+
+    <!-- 관리자 설정 -->
+    <section class="view" id="v-admin" hidden>
+      <div class="head"><div><h2>⚙️ 관리자 설정</h2><p>글쓰기·자료 올리기·삭제에 필요한 GitHub 토큰을 이 기기에 저장합니다.</p></div></div>
+      <div class="card">
+        <div class="row">
+          <input type="password" id="token" placeholder="GitHub 토큰 (github_pat_...)" autocomplete="off" aria-label="GitHub 토큰">
+          <button class="btn sm" id="saveToken" type="button">저장</button>
+        </div>
+        <div class="status" id="adminStatus" aria-live="polite"></div>
+        <p class="hint">GitHub → Settings → Developer settings → Fine-grained tokens에서 <b>geatalius.github.io</b> 레파짓만 선택하고 Contents 권한을 Read and write로 만든 토큰입니다. 이 기기의 브라우저에만 저장됩니다. 공용 기기에서는 사용 후 삭제하세요.</p>
+        <p class="hint" id="tokenState"></p>
+        <button class="btn ghost sm" id="clearToken" type="button" style="margin-top:10px">저장된 토큰 삭제</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<dialog id="postDialog">
+  <h3 id="dTitle"></h3>
+  <div class="post-meta" id="dMeta" style="text-align:left;white-space:normal"></div>
+  <div class="post-body" id="dBody"></div>
+  <div class="actions" style="margin:0 0 18px">
+    <button class="btn danger sm" id="dDelete" type="button" hidden>삭제</button>
+    <button class="btn ghost sm" id="dClose" type="button">닫기</button>
+  </div>
+  <div class="comments" id="comments"></div>
+</dialog>
 
 <footer>
-  <div class="wrap">© <span id="year"></span> Jeong · <a href="https://github.com/geatalius" target="_blank" rel="noopener">GitHub</a></div>
+  <div class="wrap">© <span id="year"></span> Jeong · <a href="https://github.com/geatalius" target="_blank" rel="noopener">GitHub</a> · <a href="#admin">관리</a></div>
 </footer>
 
 <script>
 (() => {
-  const OWNER = 'geatalius', REPO = 'geatalius.github.io', BRANCH = 'main', DIR = 'files';
+  const OWNER = 'geatalius', REPO = 'geatalius.github.io', BRANCH = 'main', DIR = 'files', POSTS = 'posts';
   const API = `https://api.github.com/repos/${OWNER}/${REPO}/contents`;
   const $ = id => document.getElementById(id);
-  const grid = $('grid'), drop = $('drop'), picker = $('picker'), statusEl = $('status'), tokenEl = $('token');
   $('year').textContent = new Date().getFullYear();
 
-  const store = {
-    get() { try { return localStorage.getItem('gh_token') || ''; } catch { return ''; } },
-    set(v) { try { localStorage.setItem('gh_token', v); } catch {} },
-    del() { try { localStorage.removeItem('gh_token'); } catch {} }
-  };
+  /* ===== 공통 유틸 ===== */
+  const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const lsDel = k => { try { localStorage.removeItem(k); } catch {} };
+  const store = { get: () => lsGet('gh_token'), set: v => lsSet('gh_token', v), del: () => lsDel('gh_token') };
 
   const encPath = p => p.split('/').map(encodeURIComponent).join('/');
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const fmtSize = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(1) + ' MB';
-  const say = (msg, cls) => { statusEl.innerHTML = cls ? `<span class="${cls}">${esc(msg)}</span>` : esc(msg); };
+  const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('ko-KR', { year:'numeric', month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }); };
+  const fmtDay = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('ko-KR', { month:'numeric', day:'numeric' }); };
+  const b64 = s => { let bin = ''; new TextEncoder().encode(s).forEach(b => bin += String.fromCharCode(b)); return btoa(bin); };
+  const sayIn = el => (msg, cls) => { el.innerHTML = !msg ? '' : cls ? `<span class="${cls}">${esc(msg)}</span>` : esc(msg); };
+  const say = sayIn($('status')), sayBoard = sayIn($('boardStatus')), sayAdmin = sayIn($('adminStatus'));
+
+  const headers = () => {
+    const h = { 'Accept': 'application/vnd.github+json' };
+    const t = store.get();
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  };
+  async function apiErr(res) { let m = String(res.status); try { m = (await res.json()).message || m; } catch {} return new Error(m); }
+  function needToken(sayFn) {
+    if (store.get()) return false;
+    sayFn('관리자 설정에서 먼저 GitHub 토큰을 저장해 주세요.', 'err');
+    return true;
+  }
+
+  /* ===== 화면 전환 (해시 라우팅) ===== */
+  const VIEWS = ['home', 'board', 'files', 'guestbook', 'admin'];
+  function route() {
+    const v = VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
+    VIEWS.forEach(n => { $('v-' + n).hidden = n !== v; });
+    document.querySelectorAll('#tabs a').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+    if (v === 'guestbook') mountGiscus($('guestbook'), 'guestbook', '<h4>📖 방명록</h4>');
+    else $('guestbook').innerHTML = '';
+    if (v === 'admin') $('tokenState').textContent = store.get() ? '✔ 이 기기에 토큰이 저장되어 있습니다.' : '저장된 토큰이 없습니다.';
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route);
+  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { location.hash = b.dataset.go; }));
+
+  /* ===== giscus (댓글·방명록) ===== */
+  function mountGiscus(box, term, title) {
+    if (box.dataset.term === term && box.querySelector('iframe, script')) return;
+    box.dataset.term = term;
+    box.innerHTML = title;
+    const s = document.createElement('script');
+    s.src = 'https://giscus.app/client.js';
+    const attrs = {
+      'data-repo': 'geatalius/geatalius.github.io',
+      'data-repo-id': 'R_kgDOVLjzAA',
+      'data-category': 'Announcements',
+      'data-category-id': 'DIC_kwDOVLjzAM4DIkAY',
+      'data-mapping': 'specific',
+      'data-term': term,
+      'data-strict': '0',
+      'data-reactions-enabled': '1',
+      'data-emit-metadata': '0',
+      'data-input-position': 'top',
+      'data-theme': 'preferred_color_scheme',
+      'data-lang': 'ko',
+      'crossorigin': 'anonymous'
+    };
+    Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
+    s.async = true;
+    box.appendChild(s);
+  }
+
+  /* ===== 방문자 기록 ===== */
+  // Abacus (키 없는 무료 공개 카운터). 같은 탭 세션에서는 하루 한 번만 집계.
+  const CNT = 'https://abacus.jasoncameron.dev';
+  const NS = 'geatalius-github-io';
+  async function hit(name, up) {
+    const r = await fetch(`${CNT}/${up ? 'hit' : 'get'}/${NS}/${name}`, { cache: 'no-store' });
+    if (r.status === 404 && !up) return 0;
+    if (!r.ok) throw new Error(r.status);
+    return Number((await r.json()).value) || 0;
+  }
+  async function loadVisitors() {
+    const d = new Date();
+    const day = `day-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    let counted = false;
+    try { counted = sessionStorage.getItem('visit_counted') === day; } catch {}
+    const last = lsGet('last_visit');
+    $('vNote').textContent = last ? `내 마지막 방문: ${fmtDate(last)}` : '첫 방문을 환영합니다!';
+    lsSet('last_visit', new Date().toISOString());
+    const show = (t, all) => {
+      const f = n => n.toLocaleString('ko-KR');
+      $('vToday').textContent = $('sToday').textContent = f(t);
+      $('vTotal').textContent = $('sTotal').textContent = f(all);
+    };
+    try {
+      const [t, all] = await Promise.all([hit(day, !counted), hit('total', !counted)]);
+      try { sessionStorage.setItem('visit_counted', day); } catch {}
+      show(t, all);
+    } catch {
+      // 카운터 서비스에 연결하지 못하면 '–'로 표시
+      $('vToday').textContent = $('vTotal').textContent = $('sToday').textContent = $('sTotal').textContent = '–';
+      $('vNote').textContent = '방문자 수를 불러오지 못했습니다.';
+    }
+  }
+
+  /* ===== 자료실 ===== */
+  const grid = $('grid'), drop = $('drop'), picker = $('picker');
+  let files = [];
 
   const ext = name => (name.split('.').pop() || '').toLowerCase();
   const kind = name => {
@@ -259,13 +443,6 @@
     if (['zip','7z','rar','tar','gz'].includes(e)) return ['zip', e.toUpperCase()];
     if (['doc','docx','hwp','hwpx','txt','md','ppt','pptx','xls','xlsx','csv'].includes(e)) return ['doc', e.toUpperCase()];
     return ['', (e || 'FILE').slice(0, 4).toUpperCase()];
-  };
-
-  const headers = () => {
-    const h = { 'Accept': 'application/vnd.github+json' };
-    const t = store.get();
-    if (t) h['Authorization'] = 'Bearer ' + t;
-    return h;
   };
 
   function saveBlob(blob, name) {
@@ -284,42 +461,73 @@
       if (!res.ok) throw new Error(res.status);
       saveBlob(await res.blob(), item.name);
       btn.textContent = '✔ 완료';
-    } catch (e) {
-      // 대체 경로: 페이지에 게시된 파일 직접 열기
+    } catch {
       window.open(`${DIR}/${encPath(item.name)}`, '_blank', 'noopener');
       btn.textContent = label;
     }
     setTimeout(() => { btn.disabled = false; btn.textContent = label; }, 2000);
   }
 
+  async function removeFile(btn, item) {
+    if (!confirm(`"${item.name}" 파일을 삭제할까요?`)) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API}/${encPath(item.path)}`, {
+        method: 'DELETE',
+        headers: { ...headers(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Delete ${item.name}`, sha: item.sha, branch: BRANCH })
+      });
+      if (!res.ok) throw await apiErr(res);
+      say(`${item.name} 삭제 완료`, 'ok');
+      await loadList();
+    } catch (e) { say('삭제 실패: ' + e.message, 'err'); btn.disabled = false; }
+  }
+
   async function loadList() {
     grid.innerHTML = '<div class="loading">불러오는 중…</div>';
     try {
       const res = await fetch(`${API}/${DIR}?ref=${BRANCH}&t=${Date.now()}`, { headers: headers() });
-      if (res.status === 404) return renderList([]);
-      if (!res.ok) throw new Error('목록을 불러오지 못했습니다 (' + res.status + ')');
-      const items = (await res.json()).filter(i => i.type === 'file' && i.name !== '.gitkeep');
-      items.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-      renderList(items);
+      if (res.status === 404) files = [];
+      else if (!res.ok) throw new Error('목록을 불러오지 못했습니다 (' + res.status + ')');
+      else files = (await res.json()).filter(i => i.type === 'file' && i.name !== '.gitkeep')
+        .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+      renderList();
     } catch (e) {
       $('count').textContent = '';
       grid.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+      $('homeFiles').innerHTML = `<li class="none">${esc(e.message)}</li>`;
     }
   }
 
-  function renderList(items) {
-    $('count').textContent = items.length ? `총 ${items.length}개의 자료` : '';
-    if (!items.length) { grid.innerHTML = '<div class="empty">아직 올린 자료가 없습니다.<br>아래에서 첫 자료를 올려 보세요.</div>'; return; }
+  function renderList() {
+    $('sFiles').textContent = files.length;
+    $('count').textContent = files.length ? `총 ${files.length}개의 자료` : '';
+    const homeFiles = $('homeFiles');
+    homeFiles.innerHTML = files.length ? '' : '<li class="none">아직 자료가 없습니다.</li>';
+    files.slice(0, 5).forEach(it => {
+      const li = document.createElement('li');
+      li.innerHTML = `<button type="button">⬇ ${esc(it.name)} <span style="color:var(--muted)">· ${fmtSize(it.size)}</span></button>`;
+      li.firstChild.addEventListener('click', e => download(e.currentTarget, it));
+      homeFiles.appendChild(li);
+    });
+
+    const q = $('fileSearch').value.trim().toLowerCase();
+    const shown = q ? files.filter(f => f.name.toLowerCase().includes(q)) : files;
+    if (!shown.length) { grid.innerHTML = `<div class="empty">${q ? '검색 결과가 없습니다.' : '아직 올린 자료가 없습니다.'}</div>`; return; }
     grid.innerHTML = '';
-    items.forEach(it => {
+    const admin = !!store.get();
+    shown.forEach(it => {
       const [cls, label] = kind(it.name);
       const card = document.createElement('article');
       card.className = 'file';
       card.innerHTML =
         `<div class="top"><div class="ico ${cls}">${esc(label)}</div>` +
         `<div class="meta"><div class="name">${esc(it.name)}</div><div class="sub">${fmtSize(it.size)}</div></div></div>` +
-        `<button class="btn" type="button">⬇ 다운로드</button>`;
-      card.querySelector('button').addEventListener('click', e => download(e.currentTarget, it));
+        `<div class="acts"><button class="btn sm" type="button">⬇ 다운로드</button>` +
+        (admin ? `<button class="btn ghost sm" type="button" title="삭제" aria-label="삭제">🗑</button>` : '') + `</div>`;
+      const [dl, del] = card.querySelectorAll('button');
+      dl.addEventListener('click', e => download(e.currentTarget, it));
+      if (del) del.addEventListener('click', e => removeFile(e.currentTarget, it));
       grid.appendChild(card);
     });
   }
@@ -346,64 +554,46 @@
       headers: { ...headers(), 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-    if (!res.ok) {
-      let m = String(res.status);
-      try { m = (await res.json()).message || m; } catch {}
-      throw new Error(m);
-    }
+    if (!res.ok) throw await apiErr(res);
     return 'ok';
   }
 
-  async function handleFiles(files) {
-    files = Array.from(files || []);
-    if (!files.length) return;
-    if (!store.get()) {
-      $('settings').open = true;
-      say('먼저 아래 업로드 설정에서 GitHub 토큰을 저장해 주세요.', 'err');
-      return;
-    }
+  async function handleFiles(list) {
+    list = Array.from(list || []);
+    if (!list.length || needToken(say)) return;
     let done = 0;
-    for (const f of files) {
-      say(`올리는 중 (${done + 1}/${files.length}): ${f.name}`);
-      try {
-        if (await uploadOne(f) === 'ok') done++;
-      } catch (e) {
-        say(`${f.name} 업로드 실패: ${e.message}`, 'err');
-        await loadList();
-        return;
-      }
+    for (const f of list) {
+      say(`올리는 중 (${done + 1}/${list.length}): ${f.name}`);
+      try { if (await uploadOne(f) === 'ok') done++; }
+      catch (e) { say(`${f.name} 업로드 실패: ${e.message}`, 'err'); await loadList(); return; }
     }
     say(`${done}개 업로드 완료!`, 'ok');
     await loadList();
   }
 
-  drop.addEventListener('click', () => picker.click());
-  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); picker.click(); } });
+  drop.addEventListener('click', () => { if (!needToken(say)) picker.click(); });
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drop.click(); } });
   picker.addEventListener('change', () => { handleFiles(picker.files); picker.value = ''; });
   ['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
   ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
   drop.addEventListener('drop', e => handleFiles(e.dataTransfer.files));
-
-  $('saveToken').addEventListener('click', () => {
-    const v = tokenEl.value.trim();
-    if (!v) { say('토큰을 입력해 주세요.', 'err'); return; }
-    store.set(v); tokenEl.value = '';
-    say('토큰을 저장했습니다. 이제 파일을 올릴 수 있습니다.', 'ok');
-    $('settings').open = false;
-  });
-  $('clearToken').addEventListener('click', () => { store.del(); tokenEl.value = ''; say('토큰을 삭제했습니다.'); });
   $('refresh').addEventListener('click', loadList);
+  $('fileSearch').addEventListener('input', renderList);
+
+  /* ===== 관리자 토큰 ===== */
+  $('saveToken').addEventListener('click', () => {
+    const v = $('token').value.trim();
+    if (!v) { sayAdmin('토큰을 입력해 주세요.', 'err'); return; }
+    store.set(v); $('token').value = '';
+    sayAdmin('토큰을 저장했습니다. 이제 글쓰기·자료 올리기가 가능합니다.', 'ok');
+    route(); renderList();
+  });
+  $('clearToken').addEventListener('click', () => { store.del(); $('token').value = ''; sayAdmin('토큰을 삭제했습니다.'); route(); renderList(); });
 
   /* ===== 게시판 ===== */
-  const POSTS = 'posts';
-  const postList = $('postList'), compose = $('compose'), dlg = $('postDialog'), boardStatus = $('boardStatus');
-  let posts = [], current = null;
-
-  const sayBoard = (msg, cls) => { boardStatus.innerHTML = cls ? `<span class="${cls}">${esc(msg)}</span>` : esc(msg); };
-  const fmtDate = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('ko-KR', { year:'numeric', month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }); };
-  const b64 = s => { let bin = ''; new TextEncoder().encode(s).forEach(b => bin += String.fromCharCode(b)); return btoa(bin); };
-  const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch { return ''; } };
-  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+  const PER_PAGE = 10;
+  const postList = $('postList'), compose = $('compose'), dlg = $('postDialog');
+  let posts = [], current = null, page = 1;
 
   async function loadBoard() {
     postList.innerHTML = '<li class="empty-row">불러오는 중…</li>';
@@ -414,7 +604,7 @@
       const items = (await res.json())
         .filter(i => i.type === 'file' && i.name.endsWith('.json'))
         .sort((a, b) => b.name.localeCompare(a.name))
-        .slice(0, 30);
+        .slice(0, 100);
       const loaded = await Promise.all(items.map(async it => {
         try {
           const r = await fetch(it.download_url, { cache: 'no-store' });
@@ -428,61 +618,62 @@
     } catch (e) {
       $('boardCount').textContent = '';
       postList.innerHTML = `<li class="empty-row">${esc(e.message)}</li>`;
+      $('homePosts').innerHTML = $('sideRecent').innerHTML = `<li class="none">${esc(e.message)}</li>`;
     }
   }
 
-  function renderBoard() {
-    $('boardCount').textContent = posts.length ? `최근 글 ${posts.length}개` : '';
-    if (!posts.length) { postList.innerHTML = '<li class="empty-row">아직 글이 없습니다.</li>'; return; }
-    postList.innerHTML = '';
-    posts.forEach((p, i) => {
+  function renderMini(el) {
+    el.innerHTML = posts.length ? '' : '<li class="none">아직 글이 없습니다.</li>';
+    posts.slice(0, 5).forEach(p => {
       const li = document.createElement('li');
-      li.innerHTML =
-        `<button type="button" class="post-item"><span class="post-title">${esc(p.title)}</span>` +
-        `<span class="post-meta">${esc(p.author || '익명')}<br>${esc(fmtDate(p.createdAt))}</span></button>`;
-      li.firstChild.addEventListener('click', () => openPost(i));
-      postList.appendChild(li);
+      li.innerHTML = `<button type="button">${esc(p.title)} <span style="color:var(--muted)">· ${esc(fmtDay(p.createdAt))}</span></button>`;
+      li.firstChild.addEventListener('click', () => openPost(p));
+      el.appendChild(li);
     });
   }
 
-  function openPost(i) {
-    current = posts[i];
-    $('dTitle').textContent = current.title;
-    $('dMeta').textContent = `${current.author || '익명'} · ${fmtDate(current.createdAt)}`;
-    $('dBody').textContent = current.content;
+  function renderBoard() {
+    $('sPosts').textContent = posts.length;
+    $('boardCount').textContent = posts.length ? `전체 글 ${posts.length}개` : '';
+    renderMini($('homePosts')); renderMini($('sideRecent'));
+
+    const q = $('postSearch').value.trim().toLowerCase();
+    const shown = q ? posts.filter(p => (p.title + '\n' + p.content).toLowerCase().includes(q)) : posts;
+    const pages = Math.max(1, Math.ceil(shown.length / PER_PAGE));
+    page = Math.min(page, pages);
+    postList.innerHTML = shown.length ? '' : `<li class="empty-row">${q ? '검색 결과가 없습니다.' : '아직 글이 없습니다.'}</li>`;
+    shown.slice((page - 1) * PER_PAGE, page * PER_PAGE).forEach(p => {
+      const no = posts.length - posts.indexOf(p);
+      const li = document.createElement('li');
+      li.innerHTML =
+        `<button type="button" class="post-item"><span class="post-no">${no}</span><span class="post-title">${esc(p.title)}</span>` +
+        `<span class="post-meta">${esc(p.author || '익명')}<br>${esc(fmtDate(p.createdAt))}</span></button>`;
+      li.firstChild.addEventListener('click', () => openPost(p));
+      postList.appendChild(li);
+    });
+
+    const pager = $('pager');
+    pager.innerHTML = '';
+    if (pages > 1) for (let i = 1; i <= pages; i++) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'btn ghost sm' + (i === page ? ' on' : ''); b.textContent = i;
+      b.addEventListener('click', () => { page = i; renderBoard(); });
+      pager.appendChild(b);
+    }
+  }
+
+  function openPost(p) {
+    current = p;
+    $('dTitle').textContent = p.title;
+    $('dMeta').textContent = `${p.author || '익명'} · ${fmtDate(p.createdAt)}`;
+    $('dBody').textContent = p.content;
     $('dDelete').hidden = !store.get();
-    loadComments(current.path);
+    $('comments').dataset.term = '';
+    mountGiscus($('comments'), p.path, '<h4>💬 댓글</h4>');
     dlg.showModal();
   }
 
-  // giscus 댓글: 글마다 별도의 Discussion 스레드(제목 = 글 파일 경로)
-  function loadComments(term) {
-    const box = $('comments');
-    box.innerHTML = '<h4>💬 댓글</h4>';
-    const s = document.createElement('script');
-    s.src = 'https://giscus.app/client.js';
-    const attrs = {
-      'data-repo': 'geatalius/geatalius.github.io',
-      'data-repo-id': 'R_kgDOVLjzAA',
-      'data-category': 'Announcements',
-      'data-category-id': 'DIC_kwDOVLjzAM4DIkAY',
-      'data-mapping': 'specific',
-      'data-term': term,
-      'data-strict': '0',
-      'data-reactions-enabled': '1',
-      'data-emit-metadata': '0',
-      'data-input-position': 'bottom',
-      'data-theme': 'preferred_color_scheme',
-      'data-lang': 'ko',
-      'crossorigin': 'anonymous'
-    };
-    Object.entries(attrs).forEach(([k, v]) => s.setAttribute(k, v));
-    s.async = true;
-    box.appendChild(s);
-  }
-
-  dlg.addEventListener('close', () => { $('comments').innerHTML = ''; });
-
+  dlg.addEventListener('close', () => { $('comments').innerHTML = ''; $('comments').dataset.term = ''; });
   $('dClose').addEventListener('click', () => dlg.close());
   dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 
@@ -495,29 +686,23 @@
         headers: { ...headers(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: 'Delete post', sha: current.sha, branch: BRANCH })
       });
-      if (!res.ok) { let m = String(res.status); try { m = (await res.json()).message || m; } catch {} throw new Error(m); }
+      if (!res.ok) throw await apiErr(res);
       dlg.close();
       sayBoard('글을 삭제했습니다.', 'ok');
       await loadBoard();
-    } catch (e) {
-      sayBoard('삭제 실패: ' + e.message, 'err');
-      dlg.close();
-    }
+    } catch (e) { sayBoard('삭제 실패: ' + e.message, 'err'); dlg.close(); }
     btn.disabled = false;
   });
 
   $('newPost').addEventListener('click', () => {
-    if (!store.get()) {
-      sayBoard('글쓰기는 먼저 아래 업로드 설정에서 GitHub 토큰을 저장해야 합니다.', 'err');
-      $('settings').open = true;
-      return;
-    }
+    if (needToken(sayBoard)) return;
     $('pAuthor').value = $('pAuthor').value || lsGet('board_author');
     compose.hidden = false;
     $('pTitle').focus();
   });
   $('cancelPost').addEventListener('click', () => { compose.hidden = true; });
   $('boardRefresh').addEventListener('click', loadBoard);
+  $('postSearch').addEventListener('input', () => { page = 1; renderBoard(); });
 
   compose.addEventListener('submit', async e => {
     e.preventDefault();
@@ -533,19 +718,18 @@
         headers: { ...headers(), 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: `Post: ${title.slice(0, 40)}`, content: b64(JSON.stringify(data)), branch: BRANCH })
       });
-      if (!res.ok) { let m = String(res.status); try { m = (await res.json()).message || m; } catch {} throw new Error(m); }
+      if (!res.ok) throw await apiErr(res);
       lsSet('board_author', author);
       $('pTitle').value = ''; $('pBody').value = '';
       compose.hidden = true;
       sayBoard('글을 등록했습니다.', 'ok');
       await loadBoard();
-    } catch (err) {
-      sayBoard('등록 실패: ' + err.message, 'err');
-    }
+    } catch (err) { sayBoard('등록 실패: ' + err.message, 'err'); }
     btn.disabled = false;
   });
 
-  if (!store.get()) $('settings').open = true;
+  route();
+  loadVisitors();
   loadList();
   loadBoard();
 })();
