@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#FF0B1220</color>
+    <color name="surface">#FF151F31</color>
+    <color name="fg">#FFEAF1FB</color>
+    <color name="muted">#FF93A3B8</color>
+    <color name="line">#FF243149</color>
+    <color name="accent">#FF4DA3FF</color>
+    <color name="accent_soft">#FF16305A</color>
+    <color name="hr">#FFFF6B6F</color>
+    <color name="hr_soft">#FF3A1C24</color>
+    <color name="good">#FF4ADE80</color>
+</resources>
