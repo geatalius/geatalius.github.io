@@ -1,0 +1,73 @@
+name: 나의 수영 기록 - APK 빌드 · 릴리즈
+
+on:
+  push:
+    paths:
+      - 'swim-log/**'
+      - '.github/workflows/swim-log-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: swim-log-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK 도구 경로 설정
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          PLAT=$(ls -d "$ANDROID_HOME"/platforms/android-* | grep -E 'android-[0-9]+$' | sort -V | tail -1)
+          echo "build-tools: $BT / platform: $PLAT"
+          echo "$BT" >> "$GITHUB_PATH"
+          echo "COMPILE_JAR=$PLAT/android.jar" >> "$GITHUB_ENV"
+
+      - name: 서명 키 준비 (저장소 Secret이 있으면 사용)
+        env:
+          KS_B64: ${{ secrets.SWIMLOG_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            mkdir -p swim-log/keystore
+            echo "$KS_B64" | base64 -d > swim-log/keystore/release.jks
+            echo "저장된 서명 키 사용"
+          else
+            echo "::warning::SWIMLOG_KEYSTORE_B64 Secret이 없어 임시 서명 키로 빌드합니다. 업데이트 설치 시 재설치가 필요할 수 있어요."
+          fi
+
+      - name: APK 빌드
+        env:
+          KS_PASS: ${{ secrets.SWIMLOG_KS_PASS || 'swimlog' }}
+        run: swim-log/build.sh
+
+      - name: 빌드 결과 보관
+        uses: actions/upload-artifact@v4
+        with:
+          name: swim-log-apk
+          path: swim-log/build/swim-log-*.apk
+
+      - name: GitHub 릴리즈 생성/갱신
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=$(grep -o 'android:versionName="[^"]*"' swim-log/AndroidManifest.xml | cut -d'"' -f2)
+          TAG="swim-log-v$V"
+          APK="swim-log/build/swim-log-$V.apk"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" --clobber
+            echo "기존 릴리즈 $TAG 의 APK를 갱신했습니다"
+          else
+            gh release create "$TAG" "$APK" --target "$GITHUB_SHA" \
+              --title "나의 수영 기록 v$V" --notes-file swim-log/RELEASE_NOTES.md
+            echo "새 릴리즈 $TAG 를 만들었습니다"
+          fi
