@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#111418">
+<meta name="mobile-web-app-capable" content="yes">
+<title>폰 리모컨</title>
+<style>
+  :root {
+    --bg: #111418; --panel: #1b2027; --btn: #262d36; --btn-on: #3a7bfd;
+    --text: #e8ecf1; --muted: #8b95a3; --line: #2f3742; --danger: #ff5b5b; --ok: #3ecf8e;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif; overflow: hidden;
+    overscroll-behavior: none; user-select: none; -webkit-user-select: none; }
+  #app { display: flex; flex-direction: column; height: 100%; height: 100dvh; }
+
+  /* 상단 바 */
+  header { display: flex; align-items: center; gap: 6px; padding: 6px 8px;
+    background: var(--panel); border-bottom: 1px solid var(--line); flex: none; }
+  #status { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); flex: none; }
+  #status.on { background: var(--ok); }
+  #title { flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+
+  button { background: var(--btn); color: var(--text); border: 0; border-radius: 10px;
+    font: inherit; font-size: 14px; padding: 10px 8px; min-height: 42px; touch-action: manipulation; }
+  button:active, button.pressed { filter: brightness(1.5); }
+  button.on { background: var(--btn-on); }
+  header button { min-height: 34px; padding: 6px 10px; font-size: 13px; }
+
+  /* 화면/터치패드 영역 */
+  #stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center;
+    justify-content: center; background: #000; touch-action: none; overflow: hidden; }
+  #screen { max-width: 100%; max-height: 100%; display: block; pointer-events: none; }
+  #pad-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    text-align: center; color: var(--muted); font-size: 14px; line-height: 1.8; pointer-events: none; padding: 20px; }
+  #mode-badge { position: absolute; top: 8px; left: 8px; background: #000a; padding: 3px 8px;
+    border-radius: 8px; font-size: 12px; color: var(--muted); pointer-events: none; }
+  #fps { position: absolute; top: 8px; right: 8px; background: #000a; padding: 3px 8px;
+    border-radius: 8px; font-size: 12px; color: var(--muted); pointer-events: none; }
+
+  /* 하단 컨트롤 */
+  #controls { flex: none; background: var(--panel); border-top: 1px solid var(--line);
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); }
+  .row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .row:last-child { margin-bottom: 0; }
+  .row > * { flex: 1; min-width: 0; }
+  .mouse-row button { min-height: 52px; font-size: 15px; }
+  #scrollbar { flex: 0 0 52px; background: var(--btn); border-radius: 10px; touch-action: none;
+    display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 18px; }
+  .panel { display: none; }
+  .panel.show { display: block; }
+  .tabs button { font-size: 13px; min-height: 36px; padding: 6px; }
+  .keys button { font-size: 13px; padding: 8px 2px; }
+  #kbd-input { width: 100%; font: inherit; font-size: 16px; padding: 10px; border-radius: 10px;
+    border: 1px solid var(--line); background: #0d1014; color: var(--text); user-select: text; -webkit-user-select: text; }
+  .setting { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .setting label { flex: 0 0 74px; }
+  .setting input[type=range] { flex: 1; }
+  .setting output { flex: 0 0 40px; text-align: right; color: var(--text); }
+  select { background: var(--btn); color: var(--text); border: 0; border-radius: 8px; padding: 8px; font: inherit; flex: 1; }
+
+  /* 접속 화면 */
+  #login { position: fixed; inset: 0; background: var(--bg); display: none; align-items: center;
+    justify-content: center; padding: 24px; z-index: 10; }
+  #login.show { display: flex; }
+  #login .box { width: 100%; max-width: 360px; }
+  #login h1 { font-size: 22px; margin: 0 0 8px; }
+  #login p { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0 0 16px; }
+  #login input { width: 100%; font-size: 18px; padding: 12px; border-radius: 10px; border: 1px solid var(--line);
+    background: #0d1014; color: var(--text); margin-bottom: 12px; user-select: text; -webkit-user-select: text; }
+  #login button { width: 100%; background: var(--btn-on); font-size: 16px; }
+  #login .err { color: var(--danger); font-size: 14px; min-height: 20px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div id="status"></div>
+    <div id="title">연결 중…</div>
+    <button id="btn-mode">터치패드</button>
+    <button id="btn-view" class="on">화면</button>
+    <button id="btn-full">⛶</button>
+  </header>
+
+  <div id="stage">
+    <img id="screen" alt="">
+    <div id="pad-hint">
+      한 손가락으로 끌기: 마우스 이동<br>
+      탭: 왼쪽 클릭 · 두 손가락 탭: 오른쪽 클릭<br>
+      두 손가락 끌기: 스크롤<br>
+      두 번 탭 후 끌기: 드래그
+    </div>
+    <div id="mode-badge">터치패드 모드</div>
+    <div id="fps"></div>
+  </div>
+
+  <div id="controls">
+    <div class="row mouse-row">
+      <button data-click="left">왼쪽 클릭</button>
+      <button data-click="middle" style="flex:0 0 52px">●</button>
+      <button data-click="right">오른쪽 클릭</button>
+      <div id="scrollbar">⇕</div>
+    </div>
+
+    <div class="row tabs">
+      <button data-tab="kbd" class="on">키보드</button>
+      <button data-tab="keys">단축키</button>
+      <button data-tab="media">미디어</button>
+      <button data-tab="settings">설정</button>
+    </div>
+
+    <div class="panel show" id="panel-kbd">
+      <div class="row">
+        <input id="kbd-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off"
+               spellcheck="false" placeholder="여기에 입력하면 바로 노트북에 타이핑됩니다">
+      </div>
+      <div class="row keys">
+        <button data-key="esc">Esc</button>
+        <button data-key="tab">Tab</button>
+        <button data-key="backspace">⌫</button>
+        <button data-key="delete">Del</button>
+        <button data-key="enter">Enter ⏎</button>
+      </div>
+      <div class="row keys">
+        <button data-mod="ctrl">Ctrl</button>
+        <button data-mod="alt">Alt</button>
+        <button data-mod="shift">Shift</button>
+        <button data-mod="cmd">Win/⌘</button>
+        <button data-key="up">↑</button>
+      </div>
+      <div class="row keys">
+        <button data-key="home">Home</button>
+        <button data-key="end">End</button>
+        <button data-key="left">←</button>
+        <button data-key="down">↓</button>
+        <button data-key="right">→</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-keys">
+      <div class="row keys">
+        <button data-combo="ctrl+c">복사</button>
+        <button data-combo="ctrl+v">붙여넣기</button>
+        <button data-combo="ctrl+x">잘라내기</button>
+        <button data-combo="ctrl+z">실행취소</button>
+      </div>
+      <div class="row keys">
+        <button data-combo="ctrl+a">전체선택</button>
+        <button data-combo="ctrl+s">저장</button>
+        <button data-combo="ctrl+f">찾기</button>
+        <button data-combo="ctrl+w">탭 닫기</button>
+      </div>
+      <div class="row keys">
+        <button data-combo="alt+tab">창 전환</button>
+        <button data-combo="alt+f4">창 닫기</button>
+        <button data-combo="cmd+d">바탕화면</button>
+        <button data-combo="cmd+l">화면 잠금</button>
+      </div>
+      <div class="row keys">
+        <button data-key="f5">F5</button>
+        <button data-key="f11">F11</button>
+        <button data-key="page_up">PgUp</button>
+        <button data-key="page_down">PgDn</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-media">
+      <div class="row">
+        <button data-key="media_volume_down">🔉 볼륨-</button>
+        <button data-key="media_volume_mute">🔇 음소거</button>
+        <button data-key="media_volume_up">🔊 볼륨+</button>
+      </div>
+      <div class="row">
+        <button data-key="media_previous">⏮ 이전</button>
+        <button data-key="media_play_pause">⏯ 재생/정지</button>
+        <button data-key="media_next">⏭ 다음</button>
+      </div>
+      <div class="row">
+        <button data-key="space">Space</button>
+        <button data-key="left">⏪ ←</button>
+        <button data-key="right">⏩ →</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-settings">
+      <div class="setting"><label>마우스 감도</label><input id="s-sens" type="range" min="0.5" max="5" step="0.1"><output id="o-sens"></output></div>
+      <div class="setting"><label>스크롤 감도</label><input id="s-scroll" type="range" min="0.2" max="3" step="0.1"><output id="o-scroll"></output></div>
+      <div class="setting"><label>화질</label><input id="s-q" type="range" min="20" max="90" step="5"><output id="o-q"></output></div>
+      <div class="setting"><label>해상도</label><input id="s-scale" type="range" min="0.2" max="1" step="0.05"><output id="o-scale"></output></div>
+      <div class="setting"><label>최대 FPS</label><input id="s-fps" type="range" min="1" max="30" step="1"><output id="o-fps"></output></div>
+      <div class="setting"><label>모니터</label><select id="s-mon"></select></div>
+      <div class="row"><button id="btn-logout">접속 코드 다시 입력</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="login">
+  <div class="box">
+    <h1>폰 리모컨</h1>
+    <p>노트북에서 실행한 서버 창에 표시된 <b>접속 코드</b>를 입력하세요.</p>
+    <div class="err" id="login-err"></div>
+    <input id="login-code" type="text" autocomplete="off" autocapitalize="off" placeholder="접속 코드">
+    <button id="login-btn">연결</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => document.querySelectorAll(s);
+
+  // ---------------------------------------------------------------- 설정
+  const DEFAULTS = { sens: 2.0, scroll: 1.0, q: 55, scale: 0.5, fps: 12, mon: 1, mode: "pad", view: true };
+  const cfg = Object.assign({}, DEFAULTS, load("cfg", {}));
+  function load(k, d) { try { const v = localStorage.getItem("rc_" + k); return v ? JSON.parse(v) : d; } catch { return d; } }
+  function save(k, v) { try { localStorage.setItem("rc_" + k, JSON.stringify(v)); } catch {} }
+  const saveCfg = () => save("cfg", cfg);
+
+  // 접속 코드: URL #뒤에 있으면 사용하고 저장
+  let token = "";
+  if (location.hash.length > 1) {
+    token = decodeURIComponent(location.hash.slice(1));
+    save("token", token);
+    history.replaceState(null, "", location.pathname);
+  } else {
+    token = load("token", "");
+  }
+
+  // ---------------------------------------------------------------- 연결
+  let ws = null, connected = false, waitingFrame = false, lastFrameReq = 0, frameTimer = null;
+  let retryDelay = 500, everConnected = false, monitors = [], failCount = 0;
+
+  function connect() {
+    if (!token) { showLogin(""); return; }
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    ws = new WebSocket(`${proto}//${location.host}/ws?t=${encodeURIComponent(token)}`);
+    ws.binaryType = "blob";
+    let opened = false;
+
+    ws.onopen = () => {
+      opened = true; connected = true; everConnected = true; retryDelay = 500; failCount = 0;
+      $("#status").classList.add("on");
+      hideLogin();
+      waitingFrame = false;
+      requestFrame();
+    };
+    ws.onmessage = (ev) => {
+      if (typeof ev.data === "string") {
+        const msg = JSON.parse(ev.data);
+        if (msg.t === "info") onInfo(msg);
+        return;
+      }
+      showFrame(ev.data);
+    };
+    ws.onclose = () => {
+      connected = false; waitingFrame = false;
+      $("#status").classList.remove("on");
+      if (!opened && !everConnected) {
+        // 한 번도 연결된 적 없는데 바로 끊김 → 접속 코드가 틀렸을 가능성이 큼
+        showLogin("연결할 수 없습니다. 접속 코드와 Wi-Fi를 확인하세요.");
+        return;
+      }
+      if (!opened && ++failCount >= 6) {
+        // 서버가 새 접속 코드로 다시 시작되었을 수 있음
+        everConnected = false; failCount = 0;
+        showLogin("다시 연결하지 못했습니다. 서버가 켜져 있는지, 접속 코드가 바뀌지 않았는지 확인하세요.");
+        return;
+      }
+      $("#title").textContent = "연결 끊김 - 재연결 중…";
+      setTimeout(connect, retryDelay);
+      retryDelay = Math.min(retryDelay * 2, 5000);
+    };
+  }
+
+  function send(obj) { if (connected && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+
+  function onInfo(msg) {
+    monitors = msg.monitors || [];
+    $("#title").textContent = msg.host || "연결됨";
+    const sel = $("#s-mon");
+    sel.innerHTML = "";
+    monitors.forEach((m, i) => {
+      const o = document.createElement("option");
+      o.value = i + 1; o.textContent = `모니터 ${i + 1} (${m.width}×${m.height})`;
+      sel.appendChild(o);
+    });
+    if (cfg.mon > monitors.length) cfg.mon = 1;
+    sel.value = cfg.mon;
+    send({ t: "mon", mon: cfg.mon });
+  }
+
+  // ---------------------------------------------------------------- 화면 스트리밍
+  const img = $("#screen");
+  let curUrl = null, frames = 0, fpsT = performance.now();
+
+  function requestFrame() {
+    clearTimeout(frameTimer);
+    if (!connected || !cfg.view || waitingFrame || document.hidden) return;
+    const wait = 1000 / cfg.fps - (performance.now() - lastFrameReq);
+    if (wait > 0) { frameTimer = setTimeout(requestFrame, wait); return; }
+    waitingFrame = true;
+    lastFrameReq = performance.now();
+    send({ t: "frame", mon: cfg.mon, scale: cfg.scale, q: cfg.q });
+  }
+
+  function showFrame(blob) {
+    waitingFrame = false;
+    if (!cfg.view) return;
+    const url = URL.createObjectURL(blob);
+    img.onload = () => { if (curUrl && curUrl !== url) URL.revokeObjectURL(curUrl); curUrl = url; };
+    img.src = url;
+    frames++;
+    const now = performance.now();
+    if (now - fpsT > 1000) {
+      $("#fps").textContent = `${Math.round(frames * 1000 / (now - fpsT))} fps · ${Math.round(blob.size / 1024)}KB`;
+      frames = 0; fpsT = now;
+    }
+    requestFrame();
+  }
+  document.addEventListener("visibilitychange", requestFrame);
+
+  // ---------------------------------------------------------------- 모드 전환 UI
+  function applyMode() {
+    const pad = cfg.mode === "pad";
+    $("#btn-mode").textContent = pad ? "터치패드" : "직접 터치";
+    $("#mode-badge").textContent = pad ? "터치패드 모드" : "직접 터치 모드 (화면을 누른 곳 클릭)";
+    $("#btn-view").classList.toggle("on", cfg.view);
+    img.style.display = cfg.view ? "" : "none";
+    $("#fps").style.display = cfg.view ? "" : "none";
+    $("#pad-hint").style.display = cfg.view ? "none" : "";
+  }
+  $("#btn-mode").onclick = () => {
+    cfg.mode = cfg.mode === "pad" ? "direct" : "pad";
+    if (cfg.mode === "direct" && !cfg.view) cfg.view = true;
+    saveCfg(); applyMode(); requestFrame();
+  };
+  $("#btn-view").onclick = () => {
+    cfg.view = !cfg.view;
+    if (!cfg.view && cfg.mode === "direct") cfg.mode = "pad";
+    saveCfg(); applyMode(); requestFrame();
+  };
+  $("#btn-full").onclick = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+        try { await screen.orientation.lock("landscape"); } catch {}
+      } else {
+        try { screen.orientation.unlock(); } catch {}
+        await document.exitFullscreen();
+      }
+    } catch {}
+  };
+
+  // ---------------------------------------------------------------- 터치 제스처
+  const stage = $("#stage");
+  const TAP_MS = 220, TAP_MOVE = 10, DBL_MS = 280, LONG_MS = 550;
+  let g = null;                    // 현재 제스처 상태
+  let pendingClick = null;         // 터치패드: 지연된 클릭(두 번 탭 판별용)
+  let lastTapEnd = 0;
+  let moveAcc = { dx: 0, dy: 0 }, scrollAcc = 0, scrollAccX = 0, rafPending = false;
+
+  function flush() {
+    rafPending = false;
+    if (moveAcc.dx || moveAcc.dy) {
+      const dx = Math.trunc(moveAcc.dx), dy = Math.trunc(moveAcc.dy);
+      if (dx || dy) { send({ t: "move", dx, dy }); moveAcc.dx -= dx; moveAcc.dy -= dy; }
+    }
+    const step = 30;
+    const sy = Math.trunc(scrollAcc / step), sx = Math.trunc(scrollAccX / step);
+    if (sy || sx) { send({ t: "scroll", dx: sx, dy: sy }); scrollAcc -= sy * step; scrollAccX -= sx * step; }
+  }
+  const schedule = () => { if (!rafPending) { rafPending = true; requestAnimationFrame(flush); } };
+
+  function normPos(touch) {
+    const r = img.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    return { x: (touch.clientX - r.left) / r.width, y: (touch.clientY - r.top) / r.height };
+  }
+  const center = (ts) => {
+    let x = 0, y = 0;
+    for (const t of ts) { x += t.clientX; y += t.clientY; }
+    return { x: x / ts.length, y: y / ts.length };
+  };
+
+  stage.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    const now = performance.now();
+    const c = center(e.touches);
+    if (!g) {
+      g = { start: now, maxTouches: e.touches.length, moved: false, last: c, origin: c,
+            dragging: false, afterTap: now - lastTapEnd < DBL_MS && pendingClick !== null, longTimer: null };
+      if (g.afterTap) { clearTimeout(pendingClick); pendingClick = null; }
+      if (cfg.mode === "direct" && e.touches.length === 1) {
+        const p = normPos(e.touches[0]);
+        if (p) send({ t: "moveto", x: p.x, y: p.y });
+        g.longTimer = setTimeout(() => {   // 길게 누르기 → 오른쪽 클릭
+          if (g && !g.moved && g.maxTouches === 1) { send({ t: "click", b: "right" }); vibrate(30); g.longDone = true; }
+        }, LONG_MS);
+      }
+    } else {
+      g.maxTouches = Math.max(g.maxTouches, e.touches.length);
+      g.last = c;
+    }
+  }, { passive: false });
+
+  stage.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    if (!g) return;
+    const c = center(e.touches);
+    const dx = c.x - g.last.x, dy = c.y - g.last.y;
+    g.last = c;
+    if (!g.moved && Math.hypot(c.x - g.origin.x, c.y - g.origin.y) > TAP_MOVE) {
+      g.moved = true;
+      clearTimeout(g.longTimer);
+      if (e.touches.length === 1 && cfg.mode === "pad" && g.afterTap) {
+        g.dragging = true; send({ t: "down", b: "left" }); vibrate(15);
+      }
+      if (e.touches.length === 1 && cfg.mode === "direct" && !g.longDone) {
+        g.dragging = true; send({ t: "down", b: "left" });
+      }
+    }
+    if (!g.moved) return;
+
+    if (e.touches.length >= 2) {            // 두 손가락: 스크롤
+      scrollAcc += dy * cfg.scroll;
+      scrollAccX -= dx * cfg.scroll;
+      schedule();
+    } else if (cfg.mode === "pad") {        // 터치패드: 상대 이동 + 가속
+      const speed = Math.hypot(dx, dy);
+      const accel = 1 + Math.min(speed / 12, 1.5);
+      moveAcc.dx += dx * cfg.sens * accel;
+      moveAcc.dy += dy * cfg.sens * accel;
+      schedule();
+    } else {                                // 직접 터치: 절대 위치
+      const p = normPos(e.touches[0]);
+      if (p) send({ t: "moveto", x: p.x, y: p.y });
+    }
+  }, { passive: false });
+
+  function onTouchEnd(e) {
+    e.preventDefault();
+    if (!g || e.touches.length > 0) return;
+    const now = performance.now();
+    const dur = now - g.start;
+    clearTimeout(g.longTimer);
+    const isTap = !g.moved && dur < TAP_MS + (g.maxTouches > 1 ? 100 : 0);
+
+    if (g.dragging) {
+      send({ t: "up", b: "left" });
+    } else if (isTap && g.maxTouches >= 3) {
+      send({ t: "click", b: "middle" });
+    } else if (isTap && g.maxTouches === 2) {
+      send({ t: "click", b: "right" }); vibrate(20);
+    } else if (isTap && g.maxTouches === 1 && !g.longDone) {
+      if (cfg.mode === "direct") {
+        send({ t: "click", b: "left" });
+      } else if (g.afterTap) {
+        send({ t: "click", b: "left", double: true });
+      } else {
+        // 두 번 탭(더블클릭/드래그)인지 보기 위해 잠깐 기다렸다가 클릭
+        lastTapEnd = now;
+        pendingClick = setTimeout(() => { pendingClick = null; send({ t: "click", b: "left" }); }, DBL_MS);
+      }
+    }
+    g = null;
+  }
+  stage.addEventListener("touchend", onTouchEnd, { passive: false });
+  stage.addEventListener("touchcancel", onTouchEnd, { passive: false });
+
+  function vibrate(ms) { try { navigator.vibrate && navigator.vibrate(ms); } catch {} }
+
+  // 스크롤 스트립 (오른쪽 ⇕ 영역을 위아래로 문지르기)
+  const sb = $("#scrollbar");
+  let sbY = null;
+  sb.addEventListener("touchstart", (e) => { e.preventDefault(); sbY = e.touches[0].clientY; }, { passive: false });
+  sb.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    const y = e.touches[0].clientY;
+    scrollAcc += (sbY - y) * cfg.scroll * 1.5;
+    sbY = y; schedule();
+  }, { passive: false });
+
+  // ---------------------------------------------------------------- 버튼들
+  // 마우스 버튼: 누르고 있으면 드래그 가능
+  $$("[data-click]").forEach((b) => {
+    const btn = b.dataset.click;
+    b.addEventListener("touchstart", (e) => { e.preventDefault(); b.classList.add("pressed"); send({ t: "down", b: btn }); vibrate(10); }, { passive: false });
+    const up = (e) => { e.preventDefault(); b.classList.remove("pressed"); send({ t: "up", b: btn }); };
+    b.addEventListener("touchend", up, { passive: false });
+    b.addEventListener("touchcancel", up, { passive: false });
+    b.addEventListener("click", () => send({ t: "click", b: btn })); // 마우스로 열었을 때
+  });
+
+  // 수정키(Ctrl/Alt/Shift/Win): 한 번 누르면 켜지고, 다음 키 입력에 조합됨
+  const mods = new Set();
+  function setMod(m, on) {
+    on ? mods.add(m) : mods.delete(m);
+    $$(`[data-mod="${m}"]`).forEach((b) => b.classList.toggle("on", on));
+  }
+  $$("[data-mod]").forEach((b) => b.addEventListener("click", () => setMod(b.dataset.mod, !mods.has(b.dataset.mod))));
+  function sendKey(k) {
+    if (mods.size) { send({ t: "combo", keys: [...mods, k] }); [...mods].forEach((m) => setMod(m, false)); }
+    else send({ t: "key", k });
+  }
+
+  // 길게 누르면 반복 입력 (방향키, 백스페이스 등)
+  $$("[data-key]").forEach((b) => {
+    let rep = null, delay = null;
+    const fire = () => { sendKey(b.dataset.key); vibrate(8); };
+    b.addEventListener("touchstart", (e) => {
+      e.preventDefault(); b.classList.add("pressed"); fire();
+      delay = setTimeout(() => { rep = setInterval(fire, 70); }, 400);
+    }, { passive: false });
+    const stop = (e) => { e.preventDefault(); b.classList.remove("pressed"); clearTimeout(delay); clearInterval(rep); };
+    b.addEventListener("touchend", stop, { passive: false });
+    b.addEventListener("touchcancel", stop, { passive: false });
+    b.addEventListener("click", fire);
+  });
+
+  $$("[data-combo]").forEach((b) => b.addEventListener("click", () => {
+    send({ t: "combo", keys: b.dataset.combo.split("+") }); vibrate(10);
+  }));
+
+  // 탭 전환
+  $$("[data-tab]").forEach((b) => b.addEventListener("click", () => {
+    $$("[data-tab]").forEach((x) => x.classList.toggle("on", x === b));
+    $$(".panel").forEach((p) => p.classList.toggle("show", p.id === "panel-" + b.dataset.tab));
+  }));
+
+  // ---------------------------------------------------------------- 실시간 키보드 입력
+  // 입력창의 이전 값과 비교해서 추가된 글자는 타이핑, 지워진 글자는 백스페이스로 보냅니다.
+  // (한글 조합 중 글자가 바뀌는 경우도 이 방식으로 처리됩니다)
+  const kin = $("#kbd-input");
+  let prev = "";
+  kin.addEventListener("input", () => {
+    const cur = kin.value;
+    if (mods.size && cur.length === prev.length + 1 && cur.startsWith(prev)) {
+      sendKey(cur.slice(-1).toLowerCase());     // Ctrl 등이 켜져 있으면 조합키로
+      kin.value = prev; return;
+    }
+    let i = 0;
+    while (i < prev.length && i < cur.length && prev[i] === cur[i]) i++;
+    const del = [...prev.slice(i)].length, add = cur.slice(i);
+    if (del) send({ t: "key", k: "backspace", n: del });
+    if (add) send({ t: "text", s: add });
+    prev = cur;
+    if (cur.length > 200) { kin.value = ""; prev = ""; }
+  });
+  kin.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); send({ t: "key", k: "enter" }); kin.value = ""; prev = ""; }
+    else if (e.key === "Backspace" && kin.value === "") { e.preventDefault(); send({ t: "key", k: "backspace" }); }
+  });
+
+  // ---------------------------------------------------------------- 설정 패널
+  function bindRange(id, key, fmt) {
+    const el = $("#s-" + id), out = $("#o-" + id);
+    el.value = cfg[key]; out.textContent = fmt(cfg[key]);
+    el.addEventListener("input", () => { cfg[key] = parseFloat(el.value); out.textContent = fmt(cfg[key]); saveCfg(); });
+  }
+  bindRange("sens", "sens", (v) => v.toFixed(1));
+  bindRange("scroll", "scroll", (v) => v.toFixed(1));
+  bindRange("q", "q", (v) => v);
+  bindRange("scale", "scale", (v) => Math.round(v * 100) + "%");
+  bindRange("fps", "fps", (v) => v);
+  $("#s-mon").addEventListener("change", (e) => { cfg.mon = +e.target.value; saveCfg(); send({ t: "mon", mon: cfg.mon }); });
+  $("#btn-logout").onclick = () => { save("token", ""); token = ""; try { ws.close(); } catch {} everConnected = false; showLogin(""); };
+
+  // ---------------------------------------------------------------- 로그인
+  function showLogin(err) { $("#login").classList.add("show"); $("#login-err").textContent = err || ""; }
+  function hideLogin() { $("#login").classList.remove("show"); }
+  $("#login-btn").onclick = () => {
+    token = $("#login-code").value.trim();
+    if (!token) return;
+    save("token", token); everConnected = false; hideLogin(); connect();
+  };
+  $("#login-code").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#login-btn").click(); });
+
+  applyMode();
+  connect();
+})();
+</script>
+</body>
+</html>
